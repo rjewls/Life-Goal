@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Military Exemption Guide - Algeria</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .progress-bar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .progress-track {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            background: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-btn .icon {
+            font-size: 2em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .content-section {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .document-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .document-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            position: relative;
+        }
+
+        .document-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .document-card.checked {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            border-color: #00d084;
+        }
+
+        .document-card .checkbox {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+        }
+
+        .document-card.checked .checkbox {
+            background: #00d084;
+            border-color: #00d084;
+            color: white;
+        }
+
+        .document-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .document-card p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .letter-template {
+            background: #f9f9f9;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 30px;
+            font-family: 'Courier New', monospace;
+            line-height: 2;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+
+        .editable-field {
+            background: #fff3cd;
+            padding: 2px 8px;
+            border-radius: 5px;
+            border: 2px dashed #ff6b6b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        .editable-field:hover {
+            background: #ffd93d;
+            transform: scale(1.05);
+        }
+
+        .instructions {
+            background: #e3f2fd;
+            border-left: 5px solid #2196f3;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            color: #2196f3;
+            margin-bottom: 10px;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .submission-info {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .submission-info h3 {
+            color: #d84315;
+            margin-bottom: 15px;
+        }
+
+        .submission-info ul {
+            margin-left: 20px;
+            line-height: 2;
+        }
+
+        .checklist-summary {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .checklist-summary h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .summary-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-box .label {
+            color: #666;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                min-width: 100%;
+            }
+            
+            .document-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎖️ Military Exemption Guide</h1>
+            <p>Algeria - Sole Breadwinner (Soutien de Famille)</p>
+        </div>
+
+        <div class="progress-bar">
+            <h3>📊 Your Progress</h3>
+            <div class="progress-track">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('documents')">
+                <span class="icon">📄</span>
+                Documents Checklist
+            </button>
+            <button class="tab-btn" onclick="switchTab('letter')">
+                <span class="icon">✍️</span>
+                Application Letter
+            </button>
+            <button class="tab-btn" onclick="switchTab('submission')">
+                <span class="icon">📍</span>
+                Where to Submit
+            </button>
+        </div>
+
+        <!-- Documents Checklist Section -->
+        <div class="content-section active" id="documents">
+            <h2>📋 Required Documents Checklist</h2>
+            <p style="margin: 20px 0; color: #666;">Click on each card to mark it as collected ✅</p>
+            
+            <div class="checklist-summary">
+                <h3>Quick Summary</h3>
+                <div class="summary-stats">
+                    <div class="stat-box">
+                        <div class="number" id="collectedCount">0</div>
+                        <div class="label">Collected</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="remainingCount">17</div>
+                        <div class="label">Remaining</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="document-grid" id="documentGrid"></div>
+        </div>
+
+        <!-- Letter Template Section -->
+        <div class="content-section" id="letter">
+            <h2>✍️ Handwritten Application Letter Template</h2>
+            
+            <div class="instructions">
+                <h3>⚠️ Important Instructions:</h3>
+                <ul>
+                    <li>This MUST be <strong>handwritten</strong> (not printed)</li>
+                    <li>Use blue or black ink on white A4 paper</li>
+                    <li>Write clearly and legibly</li>
+                    <li>Click on the <span style="background: #fff3cd; padding: 2px 8px; border-radius: 3px;">yellow fields</span> below to customize with your information</li>
+                    <li>Keep a photocopy for your records</li>
+                </ul>
+            </div>
+
+            <div class="letter-template" id="letterTemplate"></div>
+
+            <button class="copy-btn" onclick="copyLetter()">📋 Copy Letter Text</button>
+        </div>
+
+        <!-- Submission Section -->
+        <div class="content-section" id="submission">
+            <h2>📍 Where to Submit Your Application</h2>
+            
+            <div class="submission-info">
+                <h3>🏢 Submission Locations:</h3>
+                <ul>
+                    <li><strong>Centre du Service National (CSN)</strong> of your wilaya</li>
+                    <li><strong>Centre Territorial du Service National</strong> of your wilaya</li>
+                </ul>
+            </div>
+
+            <div class="instructions" style="margin-top: 30px;">
+                <h3>📝 Final Checklist Before Submission:</h3>
+                <ul>
+                    <li>✅ All documents are recent and valid</li>
+                    <li>✅ Original documents or certified copies prepared</li>
+                    <li>✅ Photocopies made for your records</li>
+                    <li>✅ Handwritten letter completed and signed</li>
+                    <li>✅ All documents organized in a folder</li>
+                </ul>
+            </div>
+
+            <div class="instructions" style="margin-top: 20px; background: #f3e5f5; border-left-color: #9c27b0;">
+                <h3>💡 Important Notes:</h3>
+                <ul>
+                    <li>Incomplete files will be rejected</li>
+                    <li>The commission will review your case as "cas social digne d'intérêt"</li>
+                    <li>Your situation as the only working male supporting your widowed mother and three sisters qualifies you for exemption</li>
+                    <li>Keep all original documents safe - you may need them for the interview</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const documents = [
+            { id: 1, title: "Handwritten Application", desc: "Demande manuscrite explaining your situation (must be handwritten in blue/black ink)" },
+            { id: 2, title: "Birth Certificate", desc: "Acte de naissance - Full copy in Arabic from your commune" },
+            { id: 3, title: "National ID Card", desc: "Carte d'identité nationale - Photocopy of both sides" },
+            { id: 4, title: "ID Photos (2)", desc: "Two recent passport-style photos" },
+            { id: 5, title: "Residence Certificate", desc: "Fiche de résidence from your local commune (APC)" },
+            { id: 6, title: "Work Certificate", desc: "Attestation de travail or employment contract from your company" },
+            { id: 7, title: "Last 3 Payslips", desc: "3 dernières fiches de paie proving you're the income earner" },
+            { id: 8, title: "Insurance Proof", desc: "Proof of insurance from your company (if available)" },
+            { id: 9, title: "Education Certificate", desc: "Copy of your highest diploma or school certificate" },
+            { id: 10, title: "Family Civil Status", desc: "Fiche familiale d'état civil or Livret de famille of your parents" },
+            { id: 11, title: "Father's Death Certificate", desc: "Acte de décès du père - CRITICAL DOCUMENT" },
+            { id: 12, title: "Family Responsibility Certificate", desc: "Attestation de chargé de famille from your commune" },
+            { id: 13, title: "Mother's Non-Employment Proof", desc: "Attestation de non-activité salariale de la mère" },
+            { id: 14, title: "Mother's Pension Proof", desc: "Attestation showing mother receives father's pension" },
+            { id: 15, title: "Sisters' School Certificates", desc: "Certificats de scolarité for all three sisters" },
+            { id: 16, title: "Sisters' Birth Certificates", desc: "Birth certificates of your three sisters (if needed)" },
+            { id: 17, title: "Extra Document Copies", desc: "Keep photocopies of everything for your records" }
+        ];
+
+        const letterTemplateText = `À Monsieur le Directeur
+du Centre du Service National
+de la Wilaya d'Alger
+
+Objet : Demande de dispense du service national pour cas social
+
+Monsieur le Directeur,
+
+J'ai l'honneur de venir par la présente solliciter une dispense du service national pour raisons sociales.
+
+Je soussigné, <span class="editable-field" onclick="editField(this)" data-placeholder="[Votre Nom Complet]">[Votre Nom Complet]</span>, né le <span class="editable-field" onclick="editField(this)" data-placeholder="[Date de naissance]">[Date de naissance]</span> à <span class="editable-field" onclick="editField(this)" data-placeholder="[Lieu de naissance]">[Lieu de naissance]</span>, demeurant à <span class="editable-field" onclick="editField(this)" data-placeholder="[Adresse complète]">[Adresse complète]</span>, titulaire de la carte d'identité nationale N° <span class="editable-field" onclick="editField(this)" data-placeholder="[Numéro CIN]">[Numéro CIN]</span>, je me permets de porter à votre connaissance ma situation familiale difficile.
+
+Suite au décès de mon père, je suis devenu le seul soutien de famille. Ma mère, veuve et sans emploi, ne perçoit que la pension de retraite de feu mon père. J'ai trois (3) sœurs mineures à ma charge, toutes scolarisées/étudiantes.
+
+En tant que fils aîné et unique homme de la famille, je travaille actuellement en tant que <span class="editable-field" onclick="editField(this)" data-placeholder="[Votre poste]">[Votre poste]</span> au sein de l'entreprise <span class="editable-field" onclick="editField(this)" data-placeholder="[Nom de l'entreprise]">[Nom de l'entreprise]</span> afin de subvenir aux besoins vitaux de ma famille (loyer, nourriture, scolarité, soins médicaux, etc.).
+
+Mon incorporation au service national mettrait ma famille dans une situation de précarité extrême, car ils perdraient leur unique source de revenus stable.
+
+C'est pourquoi, je vous prie de bien vouloir examiner ma demande avec bienveillance et m'accorder cette dispense qui me permettra de continuer à assurer la subsistance de ma famille.
+
+Dans l'attente d'une réponse favorable, je vous prie d'agréer, Monsieur le Directeur, l'expression de mes salutations respectueuses.
+
+Fait à <span class="editable-field" onclick="editField(this)" data-placeholder="[Ville]">[Ville]</span>, le <span class="editable-field" onclick="editField(this)" data-placeholder="[Date]">[Date]</span>
+
+Signature et cachet
+<span class="editable-field" onclick="editField(this)" data-placeholder="[Votre nom]">[Votre nom]</span>
+
+Pièces jointes : Dossier complet (liste des documents)`;
+
+        let checkedDocs = new Set();
+
+        function init() {
+            renderDocuments();
+            renderLetter();
+            updateProgress();
+        }
+
+        function renderDocuments() {
+            const grid = document.getElementById('documentGrid');
+            grid.innerHTML = documents.map(doc => `
+                <div class="document-card" onclick="toggleDocument(${doc.id})" id="doc-${doc.id}">
+                    <div class="checkbox">✓</div>
+                    <h3>${doc.title}</h3>
+                    <p>${doc.desc}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderLetter() {
+            document.getElementById('letterTemplate').innerHTML = letterTemplateText;
+        }
+
+        function toggleDocument(id) {
+            const card = document.getElementById(`doc-${id}`);
+            if (checkedDocs.has(id)) {
+                checkedDocs.delete(id);
+                card.classList.remove('checked');
+            } else {
+                checkedDocs.add(id);
+                card.classList.add('checked');
+            }
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const total = documents.length;
+            const collected = checkedDocs.size;
+            const percentage = Math.round((collected / total) * 100);
+            
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressFill').textContent = percentage + '%';
+            document.getElementById('collectedCount').textContent = collected;
+            document.getElementById('remainingCount').textContent = total - collected;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+            
+            event.target.closest('.tab-btn').classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function editField(element) {
+            const currentText = element.textContent;
+            const placeholder = element.getAttribute('data-placeholder');
+            const newText = prompt('Enter your information:', currentText === placeholder ? '' : currentText);
+            if (newText !== null && newText.trim() !== '') {
+                element.textContent = newText;
+            }
+        }
+
+        function copyLetter() {
+            const letterText = document.getElementById('letterTemplate').innerText;
+            navigator.clipboard.writeText(letterText).then(() => {
+                alert('✅ Letter copied to clipboard! Now you can paste it into a document or write it by hand.');
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>

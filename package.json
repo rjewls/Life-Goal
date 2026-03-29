@@ -1,0 +1,18 @@
+{
+  "name": "life-advisor-app",
+  "version": "1.0.0",
+  "description": "Life Advisor — consolidated guides + Savings & Monthly Costs tool",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "license": "MIT"
+}

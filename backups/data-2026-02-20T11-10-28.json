@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "createdAt": "2026-02-20T00:00:00.000Z",
+    "lastModified": "2026-02-20T11:09:25.468Z"
+  },
+  "settings": {
+    "monthlyIncome": 65000,
+    "defaultCurrency": "DZD"
+  },
+  "items": [
+    {
+      "id": "mlusdnvkglkw6",
+      "label": "salary",
+      "amount": 50000,
+      "type": "cost",
+      "recurringMonthly": false,
+      "date": "2026-02-20",
+      "category": "monthly savings",
+      "notes": "",
+      "createdAt": "2026-02-20T11:08:11.168Z",
+      "currency": "DZD",
+      "updatedAt": "2026-02-20T11:09:25.468Z"
+    }
+  ],
+  "transactions": []
+}

@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI/ML Learning Roadmap</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        .progress-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        .progress-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .progress-card h3 { color: #667eea; margin-bottom: 10px; font-size: 1.1em; }
+        .progress-number { font-size: 2.5em; font-weight: bold; color: #764ba2; }
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        .controls {
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .content { padding: 30px; }
+        .phase {
+            margin-bottom: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .phase.completed { border-color: #4caf50; background: #f1f8f4; }
+        .phase-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 25px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .phase-header:hover { background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%); }
+        .phase.completed .phase-header { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
+        .phase-title { font-size: 1.5em; font-weight: bold; }
+        .phase-progress { font-size: 1.1em; opacity: 0.9; }
+        .phase-content { padding: 25px; display: none; }
+        .phase.active .phase-content { display: block; }
+        .week {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .week-header { font-size: 1.3em; color: #667eea; margin-bottom: 15px; font-weight: bold; }
+        .task {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border-left: 4px solid #e0e0e0;
+        }
+        .task:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); transform: translateX(5px); }
+        .task.completed { opacity: 0.7; border-left-color: #4caf50; }
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+            margin-top: 2px;
+        }
+        .task-content { flex: 1; }
+        .task-title { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .task.completed .task-title { text-decoration: line-through; color: #999; }
+        .task-description { color: #666; font-size: 0.95em; line-height: 1.5; }
+        .task-resources { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .resource-link {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+        }
+        .resource-link:hover { background: #764ba2; transform: translateY(-2px); }
+        .task-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .type-project { background: #e3f2fd; color: #1976d2; }
+        .type-study { background: #fff3e0; color: #f57c00; }
+        .type-practice { background: #f3e5f5; color: #7b1fa2; }
+        .export-section {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .progress-overview { grid-template-columns: 1fr; }
+            .controls { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Your AI/ML Journey</h1>
+            <p>From React Basics to AI Professional in 12 Months</p>
+        </div>
+
+        <div class="progress-overview">
+            <div class="progress-card">
+                <h3>Overall Progress</h3>
+                <div class="progress-number" id="overall-progress">0%</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="overall-bar"></div>
+                </div>
+            </div>
+            <div class="progress-card">
+                <h3>Tasks Completed</h3>
+                <div class="progress-number" id="tasks-completed">0/122</div>
+            </div>
+            <div class="progress-card">
+                <h3>Current Phase</h3>
+                <div class="progress-number" style="font-size: 1.5em;" id="current-phase">Phase 1</div>
+            </div>
+            <div class="progress-card">
+                <h3>Days Active</h3>
+                <div class="progress-number" id="days-active">0</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="expand-all">Expand All</button>
+            <button class="btn btn-secondary" id="collapse-all">Collapse All</button>
+            <button class="btn btn-secondary" id="reset-progress">Reset Progress</button>
+            <button class="btn btn-primary" id="export-progress">Export Progress</button>
+        </div>
+
+        <div class="content" id="roadmap-content"></div>
+
+        <div class="export-section">
+            <p style="color: #666; margin-bottom: 10px;">💾 Your progress is automatically saved in your browser</p>
+            <small style="color: #999;">Bookmark this page and come back anytime!</small>
+        </div>
+    </div>
+
+    <script>
+        const roadmapData = [
+            {
+                id: 'phase1',
+                title: 'Phase 1: Solidify Foundations',
+                duration: '2-3 months',
+                weeks: [
+                    {
+                        week: 'Week 1-2: JavaScript Deep Dive',
+                        tasks: [
+                            { title: 'Master Array Methods', desc: 'Deep dive into map, filter, reduce, forEach, find, some, every. Build 10 exercises.', type: 'study', links: ['https://javascript.info/array-methods'] },
+                            { title: 'Async JavaScript', desc: 'Learn Promises, async/await, fetch API. Build weather app using OpenWeather API.', type: 'project', links: ['https://javascript.info/async'] },
+                            { title: 'Closures & Scope', desc: 'Understand lexical scope, closures, IIFE. Create counter and private variable examples.', type: 'study', links: ['https://javascript.info/closure'] },
+                            { title: 'ES6+ Features', desc: 'Master destructuring, spread/rest, template literals, optional chaining.', type: 'study', links: [] },
+                            { title: 'PROJECT: Advanced Todo App', desc: 'Full todo app with add/edit/delete/filter and localStorage persistence.', type: 'project', links: [] }
+                        ]
+                    },
+                    {
+                        week: 'Week 3-4: Advanced JavaScript & Git',
+                        tasks: [
+                            { title: 'OOP in JavaScript', desc: 'Classes, inheritance, prototypes. Build simple RPG game with character classes.', type: 'study', links: ['https://javascript.info/classes'] },
+                            { title: 'Error Handling', desc: 'Try-catch, custom errors. Add error handling to all previous projects.', type: 'practice', links: [] },
+                            { title: 'Git Fundamentals', desc: 'Learn git commands: init, add, commit, push, pull, branch, merge. Push to GitHub.', type: 'study', links: ['https://learngitbranching.js.org'] },
+                            { title: 'GitHub Portfolio', desc: 'Create impressive README, organize repos, add clear documentation.', type: 'project', links: [] },
+                            { title: 'PROJECT: Movie Search App', desc: 'React app using TMDB API with search, details page, and favorites.', type: 'project', links: ['https://themoviedb.org'] }
+                        ]
+                    },
+                    {
+                        week: 'Week 5-6: Python Basics',
+                        tasks: [
+                            { title: 'Python Syntax & Data Types', desc: 'Variables, strings, lists, dicts, sets. Compare with JavaScript.', type: 'study', links: ['https://learnpython.org'] },
+                            { title: 'Control Flow', desc: 'If/else, loops, list comprehensions, functions. Solve 20 HackerRank problems.', type: 'practice', links: ['https://hackerrank.com/domains/python'] },
+                            { title: 'File Handling', desc: 'Read/write files, CSV, JSON, modules. Create your own modules.', type: 'study', links: [] },
+                            { title: 'OOP in Python', desc: 'Classes, inheritance, magic methods. Build library management system.', type: 'project', links: [] },
+                            { title: 'PROJECT: CLI Task Manager', desc: 'Command-line task manager saving to JSON with full CRUD.', type: 'project', links: [] }
+                        ]
+                    },
+                    {
+                        week: 'Week 7-8: Advanced Python',
+                        tasks: [
+                            { title: 'Virtual Environments', desc: 'Learn venv, requirements.txt, project structure best practices.', type: 'study', links: [] },
+                            { title: 'Error Handling', desc: 'Try-except, raising exceptions, custom exceptions, context managers.', type: 'study', links: [] },
+                            { title: 'Regular Expressions', desc: 'Pattern matching, text processing. Build log file parser.', type: 'practice', links: ['https://regex101.com'] },
+                            { title: 'Working with APIs', desc: 'Requests library, JSON. Build cryptocurrency price tracker.', type: 'project', links: [] },
+                            { title: 'PROJECT: Web Scraper', desc: 'Use BeautifulSoup to scrape news/quotes site, save to CSV.', type: 'project', links: [] },
+                            { title: 'Daily LeetCode', desc: 'Solve 2-3 Easy problems daily. Focus on arrays, strings, hashmaps.', type: 'practice', links: ['https://leetcode.com'] }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'phase2',
+                title: 'Phase 2: Backend & Data',
+                duration: '2-3 months',
+                weeks: [
+                    {
+                        week: 'Week 9-10: Node.js Backend',
+                        tasks: [
+                            { title: 'Node.js Fundamentals', desc: 'Event loop, modules, npm. Build HTTP server with native module.', type: 'study', links: ['https://nodejs.org'] },
+                            { title: 'Express.js', desc: 'Routing, middleware, request/response. Build REST API with CRUD.', type: 'study', links: ['https://expressjs.com'] },
+                            { title: 'REST API Design', desc: 'HTTP methods, status codes, versioning, best practices.', type: 'study', links: [] },
+                            { title: 'Authentication', desc: 'JWT tokens, bcrypt hashing, protected routes with middleware.', type: 'study', links: [] },
+                            { title: 'PROJECT: Blog API', desc: 'Complete blog API with auth, posts CRUD, comments. In-memory data first.', type: 'project', links: [] }
+                        ]
+                    },
+                    {
+                        week: 'Week 11-12: Databases',
+                        tasks: [
+                            { title: 'SQL Basics', desc: 'SELECT, WHERE, JOIN, GROUP BY, aggregates. Practice on SQLZoo.', type: 'study', links: ['https://sqlzoo.net'] },
+                            { title: 'PostgreSQL Setup', desc: 'Install Postgres, learn psql, create databases/tables, data types.', type: 'study', links: [] },
+                            { title: 'Database Design', desc: 'Normalization, relationships, foreign keys, indexes.', type: 'study', links: [] },
+                            { title: 'ORM - Prisma', desc: 'Learn ORM, migrations, models, queries. Connect to Node.js API.', type: 'study', links: ['https://prisma.io'] },
+                            { title: 'PROJECT: Full-Stack Todo', desc: 'Todo app with Node.js, PostgreSQL, React. Deploy both parts.', type: 'project', links: [] }
+                        ]
+                    },
+                    {
+                        week: 'Week 13-14: Python Data Tools',
+                        tasks: [
+                            { title: 'NumPy Fundamentals', desc: 'Arrays, indexing, broadcasting, vectorization, linear algebra.', type: 'study', links: ['https://numpy.org/doc'] },
+                            { title: 'Pandas', desc: 'DataFrames, reading CSV/JSON, filtering, groupby, merge, pivots.', type: 'study', links: ['https://pandas.pydata.org'] },
+                            { title: 'Data Visualization', desc: 'Matplotlib & Seaborn. Create plots, charts, histograms, heatmaps.', type: 'study', links: [] },
+                            { title: 'Jupyter Notebooks', desc: 'Setup Jupyter, markdown cells, interactive plotting, workflow.', type: 'study', links: ['https://jupyter.org'] },
+                            { title: 'PROJECT: Data Analysis', desc: 'Kaggle dataset: clean, EDA, visualizations, write insights.', type: 'project', links: ['https://kaggle.com/datasets'] }
+                        ]
+                    },
+                    {
+                        week: 'Week 15-16: Math for ML',
+                        tasks: [
+                            { title: 'Linear Algebra', desc: 'Vectors, matrices, dot product, multiplication. Focus on intuition.', type: 'study', links: ['https://khanacademy.org/math/linear-algebra', 'https://3blue1brown.com'] },
+                            { title: 'Calculus Essentials', desc: 'Derivatives, chain rule, partial derivatives, gradients for backprop.', type: 'study', links: ['https://khanacademy.org/math/calculus-1'] },
+                            { title: 'Probability & Statistics', desc: 'Distributions, mean/variance, correlation, Bayes theorem.', type: 'study', links: [] },
+                            { title: 'Math with NumPy', desc: 'Code vector ops, matrix multiplication, simple gradient descent.', type: 'practice', links: [] },
+                            { title: 'PROJECT: Linear Regression', desc: 'Implement linear regression with gradient descent using only NumPy.', type: 'project', links: [] }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'phase3',
+                title: 'Phase 3: AI/ML Entry',
+                duration: '2-3 months',
+                weeks: [
+                    {
+                        week: 'Week 17-18: ML Fundamentals',
+                        tasks: [
+                            { title: 'Fast.ai Course (1-3)', desc: 'Practical Deep Learning for Coders. Build first image classifier.', type: 'study', links: ['https://course.fast.ai'] },
+                            { title: 'ML Concepts', desc: 'Supervised/unsupervised, train/val/test, overfitting, bias-variance.', type: 'study', links: [] },
+                            { title: 'Scikit-learn', desc: 'Train/test split, KNN, Decision Trees, metrics (accuracy, precision, recall).', type: 'study', links: ['https://scikit-learn.org'] },
+                            { title: 'Feature Engineering', desc: 'Normalization, encoding categoricals, handling missing data.', type: 'study', links: [] },
+                            { title: 'PROJECT: House Prices', desc: 'Kaggle house prices: clean, engineer features, train models, compare.', type: 'project', links: ['https://kaggle.com/c/house-prices-advanced-regression-techniques'] }
+                        ]
+                    },
+                    {
+                        week: 'Week 19-20: Deep Learning',
+                        tasks: [
+                            { title: 'Neural Networks Theory', desc: 'Perceptron, activation functions, backpropagation, gradient descent.', type: 'study', links: ['https://3blue1brown.com'] },
+                            { title: 'PyTorch Basics', desc: 'Tensors, autograd, nn.Module, training loops, loss functions, optimizers.', type: 'study', links: ['https://pytorch.org/tutorials'] },
+                            { title: 'Fast.ai Course (4-7)', desc: 'CNNs, transfer learning, data augmentation techniques.', type: 'study', links: ['https://course.fast.ai'] },
+                            { title: 'Loss & Optimizers', desc: 'Cross-entropy, MSE, Adam, SGD. When to use each.', type: 'study', links: [] },
+                            { title: 'PROJECT: MNIST Classifier', desc: 'CNN from scratch in PyTorch for digits. Get 98%+ accuracy.', type: 'project', links: [] }
+                        ]
+                    },
+                    {
+                        week: 'Week 21-22: Computer Vision',
+                        tasks: [
+                            { title: 'CNNs Deep Dive', desc: 'Convolutions, pooling, ResNet/VGG architectures, transfer learning.', type: 'study', links: ['https://cs231n.stanford.edu'] },
+                            { title: 'Data Augmentation', desc: 'Image transforms, augmentation strategies, torchvision transforms.', type: 'practice', links: [] },
+                            { title: 'Model Evaluation', desc: 'Confusion matrix, ROC curves, precision-recall, cross-validation.', type: 'study', links: [] },
+                            { title: 'Kaggle Competition', desc: 'Join Dogs vs Cats or similar. Submit predictions, aim for top 50%.', type: 'project', links: ['https://kaggle.com/competitions'] },
+                            { title: 'PROJECT: Custom Classifier', desc: 'Build classifier for personal interest (plants, cars, food). Deploy as web app.', type: 'project', links: [] }
+                        ]
+                    },
+                    {
+                        week: 'Week 23-24: NLP Basics',
+                        tasks: [
+                            { title: 'Text Processing', desc: 'Tokenization, word embeddings, Word2Vec, bag of words.', type: 'study', links: [] },
+                            { title: 'RNNs & LSTMs', desc: 'Sequential data, RNN basics, LSTM/GRU architecture (conceptual).', type: 'study', links: [] },
+                            { title: 'Sentiment Analysis', desc: 'Build sentiment classifier using pre-trained or train your own.', type: 'project', links: [] },
+                            { title: 'Hugging Face Intro', desc: 'Learn transformers library, use pre-trained models, fine-tuning basics.', type: 'study', links: ['https://huggingface.co'] },
+                            { title: 'PROJECT: Text Classifier', desc: 'Build news category classifier or spam detector with transformers.', type: 'project', links: [] }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'phase4',
+                title: 'Phase 4: Advanced AI & Specialization',
+                duration: '3-4 months',
+                weeks: [
+                    {
+                        week: 'Week 25-26: Transformers & LLMs',
+                        tasks: [
+                            { title: 'Transformer Architecture', desc: 'Attention mechanism, self-attention, multi-head attention, positional encoding.', type: 'study', links: [] },
+                            { title: 'BERT & GPT', desc: 'Understand encoder-decoder models, masked language modeling, autoregressive models.', type: 'study', links: [] },
+                            { title: 'Fine-tuning LLMs', desc: 'Fine-tune a small model on custom dataset using Hugging Face.', type: 'project', links: [] },
+                            { title: 'Prompt Engineering', desc: 'Learn effective prompting, few-shot learning, chain-of-thought.', type: 'study', links: [] },
+                            { title: 'PROJECT: Chatbot', desc: 'Build chatbot using GPT or open-source LLM. Add RAG for context.', type: 'project', links: [] }
+                        ]
+                    },
+                    {
+                        week: 'Week 27-28: Advanced Topics',
+                        tasks: [
+                            { title: 'Reinforcement Learning Basics', desc: 'Q-learning, policy gradients, reward functions. Solve simple games.', type: 'study', links: [] },
+                            { title: 'GANs Introduction', desc: 'Generative models, discriminator/generator, training GANs.', type: 'study', links: [] },
+                            { title: 'Model Deployment', desc: 'Learn Docker, FastAPI, deploy ML model as REST API. Use cloud service.', type: 'project', links: [] },
+                            { title: 'MLOps Basics', desc: 'Model versioning, experiment tracking (MLflow, Weights & Biases).', type: 'study', links: [] },
+                            { title: 'PROJECT: End-to-End ML System', desc: 'Train model, create API, deploy, add monitoring. Complete pipeline.', type: 'project', links: [] }
+                        ]
+                    },
+                    {
+                        week: 'Week 29-30: Portfolio & Job Prep',
+                        tasks: [
+                            { title: 'Portfolio Website', desc: 'Create impressive portfolio showcasing all projects with live demos.', type: 'project', links: [] },
+                            { title: 'Blog Writing', desc: 'Write 3-5 technical blog posts about your learning journey.', type: 'project', links: [] },
+                            { title: 'Open Source Contributions', desc: 'Contribute to AI/ML open source projects. Start with documentation.', type: 'practice', links: [] },
+                            { title: 'Resume & LinkedIn', desc: 'Craft strong resume highlighting projects. Optimize LinkedIn profile.', type: 'study', links: [] },
+                            { title: 'Mock Interviews', desc: 'Practice ML interview questions. Use Pramp or similar platforms.', type: 'practice', links: [] }
+                        ]
+                    },
+                    {
+                        week: 'Week 31-32: Capstone Project',
+                        tasks: [
+                            { title: 'Choose Capstone', desc: 'Pick impressive project: LLM app, CV system, or data pipeline.', type: 'project', links: [] },
+                            { title: 'Build & Document', desc: 'Build capstone with clean code, tests, documentation, README.', type: 'project', links: [] },
+                            { title: 'Deploy & Present', desc: 'Deploy live, create demo video, write detailed case study.', type: 'project', links: [] },
+                            { title: 'Network Actively', desc: 'Connect with AI professionals, join communities, attend meetups.', type: 'practice', links: [] },
+                            { title: 'Apply for Jobs', desc: 'Start applying to junior ML/AI roles. Target 10-20 applications/week.', type: 'practice', links: [] }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        let progress = {};
+
+        function init() {
+            loadProgress();
+            renderRoadmap();
+            updateStats();
+            attachEventListeners();
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('aiRoadmapProgress');
+            if (saved) {
+                progress = JSON.parse(saved);
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('aiRoadmapProgress', JSON.stringify(progress));
+            updateStats();
+        }
+
+        function renderRoadmap() {
+            const container = document.getElementById('roadmap-content');
+            container.innerHTML = '';
+
+            roadmapData.forEach((phase, phaseIdx) => {
+                const phaseEl = document.createElement('div');
+                phaseEl.className = 'phase';
+                phaseEl.id = phase.id;
+
+                const completed = isPhaseCompleted(phase);
+                if (completed) phaseEl.classList.add('completed');
+
+                const phaseProgress = getPhaseProgress(phase);
+                
+                phaseEl.innerHTML = `
+                    <div class="phase-header" onclick="togglePhase('${phase.id}')">
+                        <div>
+                            <div class="phase-title">${phase.title}</div>
+                            <div style="opacity: 0.8; font-size: 0.9em;">${phase.duration}</div>
+                        </div>
+                        <div class="phase-progress">${phaseProgress}%</div>
+                    </div>
+                    <div class="phase-content">
+                        ${phase.weeks.map((week, weekIdx) => `
+                            <div class="week">
+                                <div class="week-header">${week.week}</div>
+                                ${week.tasks.map((task, taskIdx) => {
+                                    const taskId = `${phase.id}-${weekIdx}-${taskIdx}`;
+                                    const checked = progress[taskId] || false;
+                                    return `
+                                        <div class="task ${checked ? 'completed' : ''}">
+                                            <input type="checkbox" class="task-checkbox" 
+                                                   id="${taskId}" 
+                                                   ${checked ? 'checked' : ''}
+                                                   onchange="toggleTask('${taskId}')">
+                                            <div class="task-content">
+                                                <div class="task-title">
+                                                    ${task.title}
+                                                    <span class="task-type type-${task.type}">${task.type}</span>
+                                                </div>
+                                                <div class="task-description">${task.desc}</div>
+                                                ${task.links.length > 0 ? `
+                                                    <div class="task-resources">
+                                                        ${task.links.map(link => `
+                                                            <a href="${link}" target="_blank" class="resource-link">📚 Resource</a>
+                                                        `).join('')}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                container.appendChild(phaseEl);
+            });
+        }
+
+        function togglePhase(phaseId) {
+            const phase = document.getElementById(phaseId);
+            phase.classList.toggle('active');
+        }
+
+        function toggleTask(taskId) {
+            progress[taskId] = !progress[taskId];
+            saveProgress();
+            renderRoadmap();
+        }
+
+        function isPhaseCompleted(phase) {
+            let total = 0;
+            let completed = 0;
+            phase.weeks.forEach((week, weekIdx) => {
+                week.tasks.forEach((task, taskIdx) => {
+                    total++;
+                    const taskId = `${phase.id}-${weekIdx}-${taskIdx}`;
+                    if (progress[taskId]) completed++;
+                });
+            });
+            return completed === total && total > 0;
+        }
+
+        function getPhaseProgress(phase) {
+            let total = 0;
+            let completed = 0;
+            phase.weeks.forEach((week, weekIdx) => {
+                week.tasks.forEach((task, taskIdx) => {
+                    total++;
+                    const taskId = `${phase.id}-${weekIdx}-${taskIdx}`;
+                    if (progress[taskId]) completed++;
+                });
+            });
+            return total > 0 ? Math.round((completed / total) * 100) : 0;
+        }
+
+        function updateStats() {
+            let totalTasks = 0;
+            let completedTasks = 0;
+
+            roadmapData.forEach(phase => {
+                phase.weeks.forEach((week, weekIdx) => {
+                    week.tasks.forEach((task, taskIdx) => {
+                        totalTasks++;
+                        const taskId = `${phase.id}-${weekIdx}-${taskIdx}`;
+                        if (progress[taskId]) completedTasks++;
+                    });
+                });
+            });
+
+            const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            
+            document.getElementById('overall-progress').textContent = percentage + '%';
+            document.getElementById('overall-bar').style.width = percentage + '%';
+            document.getElementById('tasks-completed').textContent = `${completedTasks}/${totalTasks}`;
+
+            // Calculate current phase
+            let currentPhase = 'Phase 1';
+            for (let i = 0; i < roadmapData.length; i++) {
+                const phaseProgress = getPhaseProgress(roadmapData[i]);
+                if (phaseProgress < 100) {
+                    currentPhase = `Phase ${i + 1}`;
+                    break;
+                }
+                if (i === roadmapData.length - 1) {
+                    currentPhase = 'Complete! 🎉';
+                }
+            }
+            document.getElementById('current-phase').textContent = currentPhase;
+
+            // Calculate days active
+            if (!progress.startDate) {
+                progress.startDate = new Date().toISOString();
+                saveProgress();
+            }
+            const start = new Date(progress.startDate);
+            const now = new Date();
+            const days = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+            document.getElementById('days-active').textContent = days;
+        }
+
+        function attachEventListeners() {
+            document.getElementById('expand-all').addEventListener('click', () => {
+                document.querySelectorAll('.phase').forEach(p => p.classList.add('active'));
+            });
+
+            document.getElementById('collapse-all').addEventListener('click', () => {
+                document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+            });
+
+            document.getElementById('reset-progress').addEventListener('click', () => {
+                if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                    progress = {};
+                    localStorage.removeItem('aiRoadmapProgress');
+                    renderRoadmap();
+                    updateStats();
+                }
+            });
+
+            document.getElementById('export-progress').addEventListener('click', () => {
+                const dataStr = JSON.stringify(progress, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'ai-roadmap-progress.json';
+                link.click();
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

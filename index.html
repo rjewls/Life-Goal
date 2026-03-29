@@ -1,0 +1,847 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Life Advisor — Your Personal Guide Hub</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Life Advisor" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     APP SHELL
+═══════════════════════════════════════════════════════════════ -->
+<div id="app-shell">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────── -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <h1>🌟 Life Advisor</h1>
+      <span>Your personal guide &amp; finance hub</span>
+    </div>
+
+    <nav>
+      <ul>
+        <li class="active">
+          <button class="nav-link" data-page="dashboard">
+            <span class="nav-icon">🏠</span> Dashboard
+          </button>
+        </li>
+        <li class="nav-section-label">GUIDES</li>
+        <li>
+          <button class="nav-link" data-page="guides">
+            <span class="nav-icon">📋</span> Overview
+          </button>
+        </li>
+        <li>
+          <button class="nav-link" data-page="algeria">
+            <span class="nav-icon">🇩🇿</span> Algeria Papers
+          </button>
+        </li>
+        <li>
+          <button class="nav-link" data-page="military">
+            <span class="nav-icon">🪖</span> Military Exemption
+          </button>
+        </li>
+        <li>
+          <button class="nav-link" data-page="ecommerce">
+            <span class="nav-icon">🛒</span> E-Commerce
+          </button>
+        </li>
+        <li>
+          <button class="nav-link" data-page="ai-creatives">
+            <span class="nav-icon">🎨</span> AI Creatives
+          </button>
+        </li>
+        <li>
+          <button class="nav-link" data-page="coding">
+            <span class="nav-icon">💻</span> Coding Roadmap
+          </button>
+        </li>
+        <li class="nav-section-label">FINANCE</li>
+        <li>
+          <button class="nav-link" data-page="savings">
+            <span class="nav-icon">💰</span> Savings &amp; Costs
+          </button>
+        </li>
+        <li class="nav-section-label">MORE</li>
+        <li>
+          <button class="nav-link" data-page="tools">
+            <span class="nav-icon">🔧</span> Tools
+          </button>
+        </li>
+        <li>
+          <button class="nav-link" data-page="settings">
+            <span class="nav-icon">⚙️</span> Settings
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      Life Advisor v1.0 &bull; Data saved locally<br>
+      <button onclick="openTutorial()" style="background:none;border:none;color:var(--sidebar-muted);cursor:pointer;padding:4px 0;font-size:.78rem;text-decoration:underline">
+        ? How to use this app
+      </button>
+    </div>
+  </aside>
+
+  <!-- Overlay for mobile sidebar -->
+  <div id="sidebar-overlay"></div>
+
+  <!-- ── MAIN CONTENT ─────────────────────────────────────── -->
+  <div id="main-content">
+
+    <!-- Top bar -->
+    <header id="topbar">
+      <button id="sidebar-toggle" title="Toggle sidebar">☰</button>
+      <span id="page-title">🏠 Dashboard</span>
+      <div class="spacer"></div>
+      <button class="btn btn-outline btn-sm" onclick="navigate('savings')">+ Add Item</button>
+    </header>
+
+    <!-- ════════════════════════════════════════════════
+         PAGE: DASHBOARD
+    ════════════════════════════════════════════════════ -->
+    <div id="page-dashboard" class="page-view active">
+      <h2 class="page-heading">Dashboard</h2>
+      <p class="page-subheading">Your monthly financial snapshot at a glance.</p>
+
+      <!-- Stat cards -->
+      <div class="stats-grid">
+        <div class="stat-card income">
+          <div class="stat-label">Monthly Income</div>
+          <div class="stat-value" id="dash-income">—</div>
+          <div class="stat-note">per month</div>
+        </div>
+        <div class="stat-card costs">
+          <div class="stat-label">Total Monthly Costs</div>
+          <div class="stat-value" id="dash-costs">—</div>
+          <div class="stat-note">recurring expenses</div>
+        </div>
+        <div class="stat-card savings">
+          <div class="stat-label">Monthly Savings</div>
+          <div class="stat-value" id="dash-savings">—</div>
+          <div class="stat-note">recurring savings</div>
+        </div>
+        <div class="stat-card surplus" id="dash-surplus-card">
+          <div class="stat-label">Monthly Surplus</div>
+          <div class="stat-value" id="dash-surplus">—</div>
+          <div class="stat-note">income − costs</div>
+        </div>
+        <div class="stat-card alltime">
+          <div class="stat-label">All-Time Savings</div>
+          <div class="stat-value" id="dash-alltime">—</div>
+          <div class="stat-note">sum of all saved entries</div>
+        </div>
+      </div>
+
+      <!-- Visual bar chart -->
+      <div class="card mb-16">
+        <h3 class="section-title">Monthly Breakdown</h3>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <span class="bar-label">Income</span>
+            <div class="bar-track"><div class="bar-fill saving" id="bar-income" style="width:0%"></div></div>
+            <span class="bar-amount" id="bar-income-lbl">0.00</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Costs</span>
+            <div class="bar-track"><div class="bar-fill cost" id="bar-costs" style="width:0%"></div></div>
+            <span class="bar-amount" id="bar-costs-lbl">0.00</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Savings</span>
+            <div class="bar-track"><div class="bar-fill saving" id="bar-savings" style="width:0%"></div></div>
+            <span class="bar-amount" id="bar-savings-lbl">0.00</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Surplus</span>
+            <div class="bar-track"><div class="bar-fill surplus" id="bar-surplus" style="width:0%"></div></div>
+            <span class="bar-amount" id="bar-surplus-lbl">0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent items -->
+      <div class="card">
+        <div class="flex-row mb-16">
+          <h3 class="section-title" style="margin-bottom:0">Recent Items</h3>
+          <div class="spacer"></div>
+          <button class="btn btn-outline btn-sm" onclick="navigate('savings')">View All →</button>
+        </div>
+        <div class="items-table-wrap">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Label</th><th>Category</th><th>Amount</th><th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="dash-recent-tbody">
+              <tr><td colspan="4" class="items-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quick navigation cards -->
+      <div class="guide-grid mt-16">
+        <div class="guide-card" onclick="navigate('guides')">
+          <div class="guide-icon">📚</div>
+          <h3>Life Guides</h3>
+          <p>Algeria papers, passport, military, e-commerce, AI tools, coding roadmap.</p>
+          <span class="guide-tag">5 guides</span>
+        </div>
+        <div class="guide-card" onclick="navigate('savings')">
+          <div class="guide-icon">💰</div>
+          <h3>Savings &amp; Costs</h3>
+          <p>Track monthly income, recurring expenses, one-off costs, and cumulative savings.</p>
+          <span class="guide-tag">Finance tracker</span>
+        </div>
+        <div class="guide-card" onclick="navigate('tools')">
+          <div class="guide-icon">🔧</div>
+          <h3>Tools</h3>
+          <p>Surplus calculator, savings goal tracker, and quick utility tools.</p>
+          <span class="guide-tag">Calculators</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════
+         PAGE: LIFE GUIDES
+    ════════════════════════════════════════════════════ -->
+    <div id="page-guides" class="page-view">
+      <h2 class="page-heading">Life Guides</h2>
+      <p class="page-subheading">Click any guide below to open its full interactive tool &mdash; all original features fully preserved.</p>
+
+      <!-- Guide index cards -->
+      <div class="guide-grid">
+        <div class="guide-card" onclick="navigate('algeria')">
+          <div class="guide-icon">🇩🇿</div>
+          <h3>Algeria Papers &amp; Work Abroad</h3>
+          <p>Passport, recensement, military service, attestation de travail, CV, Gulf &amp; Germany &amp; Canada job routes.</p>
+          <span class="guide-tag">Admin &amp; Career</span>
+        </div>
+        <div class="guide-card" onclick="navigate('military')">
+          <div class="guide-icon">🪖</div>
+          <h3>Military Exemption Guide</h3>
+          <p>Interactive 17-document checklist that turns green when ticked, editable letter template, and submission info.</p>
+          <span class="guide-tag">Admin</span>
+        </div>
+        <div class="guide-card" onclick="navigate('ecommerce')">
+          <div class="guide-icon">🛒</div>
+          <h3>E-Commerce Mastery 2026</h3>
+          <p>Complete guide from niche research to scaling — platforms, branding, marketing, operations, tools and key metrics.</p>
+          <span class="guide-tag">Business</span>
+        </div>
+        <div class="guide-card" onclick="navigate('ai-creatives')">
+          <div class="guide-icon">🎨</div>
+          <h3>Free AI Tools for Creatives</h3>
+          <p>Best free AI tools for product landing page images, copy, video, and marketing creatives.</p>
+          <span class="guide-tag">AI &amp; Tools</span>
+        </div>
+        <div class="guide-card" onclick="navigate('coding')">
+          <div class="guide-icon">💻</div>
+          <h3>AI/ML Coding Roadmap</h3>
+          <p>12-month interactive checklist: 122 tasks across 4 phases with progress tracking, resources and project ideas. Saves to browser.</p>
+          <span class="guide-tag">Learning</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════
+         PAGE: SAVINGS & MONTHLY COSTS
+    ════════════════════════════════════════════════════ -->
+    <div id="page-savings" class="page-view">
+      <h2 class="page-heading">Savings &amp; Monthly Costs</h2>
+      <p class="page-subheading">Track expenses per month. Items categorised <strong>"monthly savings"</strong> flow into All-Time Savings automatically.</p>
+
+      <!-- ── Month Navigator ── -->
+      <div class="card month-nav-card" style="margin-bottom:18px">
+        <button class="btn btn-outline btn-sm" onclick="changeMonth(-1)" title="Previous month">◀</button>
+        <div style="flex:1;text-align:center">
+          <div id="month-label" style="font-size:1.15rem;font-weight:700;color:var(--text)">Loading…</div>
+          <select id="month-select" onchange="selectMonth(this.value)" style="margin-top:4px;font-size:.82rem;border:none;background:transparent;color:var(--text-muted);cursor:pointer"></select>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="changeMonth(1)" title="Next month">▶</button>
+        <button class="btn btn-primary btn-sm" onclick="goToCurrentMonth()" style="white-space:nowrap">Today</button>
+      </div>
+
+      <!-- ── Income for this month ── -->
+      <div class="card" style="margin-bottom:18px">
+        <h3 class="section-title" style="margin-bottom:10px">💵 Income for this Month</h3>
+        <div class="flex-row" style="gap:10px;align-items:flex-end">
+          <div class="form-group" style="flex:1;max-width:280px;margin-bottom:0">
+            <label style="font-size:.8rem;color:var(--text-muted)">Monthly Income</label>
+            <input type="number" id="income-input" min="0" step="100" placeholder="e.g. 65000" />
+          </div>
+          <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="saveIncome()">Save Income</button>
+          <span id="income-currency-label" class="text-muted" style="font-size:.82rem;align-self:flex-end;padding-bottom:6px">DZD</span>
+        </div>
+      </div>
+
+      <!-- ── Summary stats ── -->
+      <div class="stats-grid" style="margin-bottom:18px">
+        <div class="stat-card income">
+          <div class="stat-label">Base Income</div>
+          <div class="stat-value" id="sav-income-val">0.00</div>
+          <div class="stat-note">monthly salary</div>
+        </div>
+        <div class="stat-card savings" style="border-left-color:var(--success)">
+          <div class="stat-label">Extra Income</div>
+          <div class="stat-value" id="sav-extra-val" style="color:var(--success)">0.00</div>
+          <div class="stat-note">from sales, freelance…</div>
+        </div>
+        <div class="stat-card costs">
+          <div class="stat-label">Expenses</div>
+          <div class="stat-value" id="sav-costs-val">0.00</div>
+          <div class="stat-note">all costs this month</div>
+        </div>
+        <div class="stat-card savings">
+          <div class="stat-label">Monthly Savings</div>
+          <div class="stat-value" id="sav-savings-val">0.00</div>
+          <div class="stat-note">category: monthly savings</div>
+        </div>
+        <div class="stat-card surplus" id="sav-remaining-card">
+          <div class="stat-label">Remaining Balance</div>
+          <div class="stat-value" id="sav-remaining-val">0.00</div>
+          <div class="stat-note" id="sav-remaining-note">income + extra − expenses</div>
+        </div>
+      </div>
+
+      <!-- ── Surplus panel ── -->
+      <div id="surplus-panel" style="display:none;margin-bottom:18px">
+        <div class="card" style="border-left:4px solid var(--success);background:linear-gradient(135deg,rgba(16,185,129,.06),rgba(16,185,129,.02))">
+          <div class="flex-row" style="align-items:center;gap:14px;flex-wrap:wrap">
+            <div style="flex:1">
+              <div style="font-weight:700;color:var(--success);margin-bottom:4px">💰 Unallocated Balance</div>
+              <div style="font-size:.9rem;color:var(--text-muted)">You have <strong id="surplus-amount-lbl" style="color:var(--text)">0</strong> left after all expenses for <strong id="surplus-month-lbl" style="color:var(--text)">this month</strong>. Move it to All-Time Savings?</div>
+            </div>
+            <button class="btn btn-success" onclick="addSurplusToSavings()">Add to All-Time Savings</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Items table ── -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="flex-row mb-16" style="flex-wrap:wrap;gap:8px">
+          <h3 class="section-title" style="margin-bottom:0">Items &mdash; <span id="items-month-label" style="color:var(--accent)">this month</span></h3>
+          <div class="spacer"></div>
+          <button class="btn btn-primary btn-sm" onclick="openAddItem()">&#65291; Add Item</button>
+          <button class="btn btn-outline btn-sm" onclick="exportData()">⬇ Export</button>
+          <button class="btn btn-outline btn-sm" onclick="importData()">⬆ Import</button>
+          <button class="btn btn-outline btn-sm" onclick="saveBackup()">💾 Snapshot</button>
+        </div>
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="search" id="filter-search" placeholder="Search label or category…" oninput="applyFilter()" style="flex:1;min-width:150px" />
+        </div>
+        <div class="items-table-wrap">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="items-tbody">
+              <tr><td colspan="5" class="items-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── All-Time Savings History ── -->
+      <div class="card" id="alltime-savings-card">
+        <div class="flex-row mb-16">
+          <h3 class="section-title" style="margin-bottom:0">🏦 All-Time Savings History</h3>
+        </div>
+        <!-- Totals by currency -->
+        <div id="alltime-totals-row" class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:16px"></div>
+        <!-- Ledger table -->
+        <div class="items-table-wrap">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Month</th>
+                <th>Source</th>
+                <th>Label</th>
+                <th>Amount</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ledger-tbody">
+              <tr><td colspan="6" class="items-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════
+         PAGE: TOOLS
+    ════════════════════════════════════════════════════ -->
+    <div id="page-tools" class="page-view">
+      <h2 class="page-heading">Tools</h2>
+      <p class="page-subheading">Quick utility calculators to support your life goals.</p>
+
+      <!-- Surplus calculator -->
+      <div class="card mb-16">
+        <h3 class="section-title">💡 Surplus Calculator</h3>
+        <p style="font-size:.9rem;color:var(--text-muted);margin-bottom:14px">Enter your own numbers to calculate available monthly surplus and savings rate.</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Monthly Income</label>
+            <input type="number" id="tool-income" min="0" placeholder="e.g. 85000" oninput="calcSurplus()" />
+          </div>
+          <div class="form-group">
+            <label>Total Monthly Costs</label>
+            <input type="number" id="tool-costs" min="0" placeholder="e.g. 45000" oninput="calcSurplus()" />
+          </div>
+          <div class="form-group">
+            <label>Monthly Savings Target</label>
+            <input type="number" id="tool-savings" min="0" placeholder="e.g. 15000" oninput="calcSurplus()" />
+          </div>
+        </div>
+        <div id="surplus-result" style="display:none;margin-top:14px">
+          <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+            <div class="stat-card surplus">
+              <div class="stat-label">Available Surplus</div>
+              <div class="stat-value" id="tool-surplus-val">0</div>
+            </div>
+            <div class="stat-card savings">
+              <div class="stat-label">Savings Rate</div>
+              <div class="stat-value" id="tool-savings-rate">0%</div>
+            </div>
+            <div class="stat-card alltime">
+              <div class="stat-label">Yearly Savings Est.</div>
+              <div class="stat-value" id="tool-yearly-savings">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Savings goal tracker -->
+      <div class="card mb-16">
+        <h3 class="section-title">🎯 Savings Goal Tracker</h3>
+        <p style="font-size:.9rem;color:var(--text-muted);margin-bottom:14px">How long to reach a savings goal?</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Goal Amount</label>
+            <input type="number" id="goal-amount" min="0" placeholder="e.g. 500000" oninput="calcGoal()" />
+          </div>
+          <div class="form-group">
+            <label>Monthly Savings</label>
+            <input type="number" id="goal-monthly" min="0" placeholder="e.g. 15000" oninput="calcGoal()" />
+          </div>
+          <div class="form-group">
+            <label>Already Saved</label>
+            <input type="number" id="goal-saved" min="0" placeholder="0" oninput="calcGoal()" />
+          </div>
+        </div>
+        <div id="goal-result" style="display:none;margin-top:12px;padding:14px;background:var(--surface2);border-radius:var(--radius-sm)">
+          <div id="goal-result-text" style="font-size:1rem;font-weight:600"></div>
+        </div>
+      </div>
+
+      <!-- Budget ratio guide -->
+      <div class="card">
+        <h3 class="section-title">📊 Budget Ratio Guidelines</h3>
+        <table class="items-table">
+          <thead>
+            <tr><th>Budget Rule</th><th>Needs</th><th>Wants</th><th>Savings</th><th>Best For</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>50/30/20</strong></td><td>50%</td><td>30%</td><td>20%</td><td>Most people</td></tr>
+            <tr><td><strong>70/20/10</strong></td><td>70%</td><td>20%</td><td>10%</td><td>Low income</td></tr>
+            <tr><td><strong>50/20/30</strong></td><td>50%</td><td>20%</td><td>30%</td><td>Aggressive savers</td></tr>
+            <tr><td><strong>30/20/50</strong></td><td>30%</td><td>20%</td><td>50%</td><td>FIRE/Expat saving</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════
+         PAGE: SETTINGS
+    ════════════════════════════════════════════════════ -->
+    <div id="page-settings" class="page-view">
+      <h2 class="page-heading">Settings</h2>
+      <p class="page-subheading">Manage data, backups, and app preferences.</p>
+
+      <div class="card settings-section">
+        <h3>🌍 Default Currency</h3>
+        <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:14px">Sets the currency used for income, surplus, and items that don’t have a specific currency.</p>
+        <div class="flex-row">
+          <div class="form-group" style="max-width:160px">
+            <label>Currency Code</label>
+            <input type="text" id="settings-default-currency" maxlength="8" placeholder="DZD" style="text-transform:uppercase;font-weight:600" />
+          </div>
+          <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="saveSettingsDefaultCurrency()">Save Currency</button>
+        </div>
+      </div>
+
+      <div class="card settings-section">
+        <h3>📦 Data Management</h3>
+        <div class="btn-group mb-16">
+          <button class="btn btn-outline" onclick="exportData()">⬇ Export data.json</button>
+          <button class="btn btn-outline" onclick="importData()">⬆ Import data.json</button>
+          <button class="btn btn-success" onclick="saveBackup()">💾 Save Snapshot Backup</button>
+        </div>
+        <p style="font-size:.85rem;color:var(--text-muted)">Backups are saved in the <code>backups/</code> folder in the project root with a timestamp filename.</p>
+        <hr class="divider" />
+        <h4 style="margin-bottom:10px;font-size:.92rem">Existing Backups</h4>
+        <ul id="backups-list" style="list-style:none;display:flex;flex-direction:column;gap:5px">
+          <li class="text-muted" style="font-size:.88rem">Loading…</li>
+        </ul>
+      </div>
+
+      <div class="card settings-section">
+        <h3>📱 Sync with PC Server</h3>
+        <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:14px">
+          Sync your phone data with the PC server (<code>server.js</code>) when you're on the same Wi-Fi.
+          Enter your PC's local IP and port, then pull (download from PC) or push (upload to PC).
+        </p>
+        <div class="alert-box" style="margin-bottom:14px;font-size:.83rem">
+          <strong>⚠️ Note:</strong> Sync only works when this app is accessed via <code>http://</code>
+          (not <code>https://</code>). If you installed this as a PWA from a GitHub Pages URL (https),
+          open your phone browser and navigate directly to <code>http://[PC-IP]:3001</code> for sync.
+        </div>
+        <div class="flex-row" style="gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <div class="form-group" style="flex:1;min-width:200px">
+            <label>PC Server URL</label>
+            <input type="url" id="sync-url-input" placeholder="http://192.168.1.50:3001"
+              style="font-family:monospace;font-size:.88rem" />
+          </div>
+          <button class="btn btn-outline btn-sm" style="align-self:flex-end" onclick="doSaveSyncUrl()">Save URL</button>
+        </div>
+        <div class="btn-group mb-12">
+          <button class="btn btn-outline" onclick="doSyncPull()">⬇️ Pull from PC</button>
+          <button class="btn btn-primary" onclick="doSyncPush()">⬆️ Push to PC</button>
+        </div>
+        <p id="sync-status" style="font-size:.85rem;color:var(--text-muted);min-height:1.4em"></p>
+        <p style="font-size:.8rem;color:var(--text-muted);margin-top:8px">
+          <strong>Pull</strong> = overwrite phone data with PC data &nbsp;│&nbsp;
+          <strong>Push</strong> = overwrite PC data with phone data
+        </p>
+      </div>
+
+      <div class="card settings-section">
+        <h3>⚠️ Danger Zone</h3>
+        <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:12px">Permanently delete all items and reset data. This cannot be undone. Make a backup first.</p>
+        <button class="btn btn-danger btn-sm" onclick="resetAllData()">🗑 Reset All Data</button>
+      </div>
+
+      <div class="card settings-section">
+        <h3>ℹ️ About</h3>
+        <p style="font-size:.88rem;color:var(--text-muted)">Life Advisor v1.0 — Data is stored in <code>data.json</code> in the project root. Backups are stored in <code>backups/</code>. Serve with <code>node server.js</code> on port 3000.</p>
+        <button class="btn btn-outline btn-sm mt-8" onclick="openTutorial()">📖 View Tutorial</button>
+      </div>
+    </div>
+
+
+    <!--  PAGE: ALGERIA PAPERS  -->
+    <div id="page-algeria" class="page-view">
+      <h2 class="page-heading">🇩🇿 Algeria Papers &amp; Work Abroad</h2>
+      <p class="page-subheading">Master plan: documents, military service options, CV templates, and routes to Gulf / Germany / Canada.</p>
+          <div class="guide-detail">
+            <h2>Master Plan: Get Your Papers &amp; Work Abroad</h2>
+            <p><em>Profile: 25 y/o male • Baccalaureate • 1 year college • 2 years Noest Express (Dispatch Agent / Station Supervisor)</em></p>
+
+            <div class="alert-box">
+              <strong>⚠️ 3 Critical Blockers — Fix These First</strong>
+              <ol style="margin-left:18px;margin-top:8px;">
+                <li><strong>Recensement / Military service status</strong> — visit your commune or military recruitment office and get a written attestation. If "insoumis", ask for the official regularization procedure. <a href="https://www.mdn.dz/site_principal/sommaire/service/recencement_fr.php" target="_blank" rel="noopener">MDN — Recensement ↗</a></li>
+                <li><strong>Passport (biometric)</strong> — ensure at least 12–24 months remaining. Book appointment online. <a href="https://passeport.interieur.gov.dz/fr/Accueil_Fr/Accueil" target="_blank" rel="noopener">Portail Passeport Biométrique ↗</a></li>
+                <li><strong>Work proof / CNAS</strong> — request an attestation de travail (signed &amp; stamped) from Noest Express. Get your CNAS relevé de carrière. <a href="https://elhanaa.cnas.dz/" target="_blank" rel="noopener">ELHANAA (CNAS portal) ↗</a></li>
+              </ol>
+            </div>
+
+            <h3>First 14 Days — Action Checklist</h3>
+            <ul>
+              <li>Make 3 copies of ID, acte de naissance (12S), CNAS card, passport page (scan PDFs)</li>
+              <li>Send HR attestation request to your manager today — ask for stamp &amp; signature</li>
+              <li>Book appointments: passport office (if renewing), recruitment office (service national), CNAS local office</li>
+              <li>Create a folder on your phone &amp; cloud named <em>Papiers — Export</em> with scanned copies</li>
+            </ul>
+
+            <h3>Military Service Options</h3>
+            <div class="alert-box">
+              <strong>🚨 The "Carte Jaune" is your #1 blocker.</strong> Border police will not let you exit without a card or a "Sursis" (deferment).
+            </div>
+            <ul>
+              <li><strong>Option A (Fastest):</strong> Medical Exemption — get a specialist report for any chronic condition and submit to military tribunal.</li>
+              <li><strong>Option B (Student Loophole):</strong> Enroll in CFPA or INSFP vocational school (Feb or Sept session) → get "Certificat de Scolarité" → new Sursis valid for travel. Choose "Transport &amp; Logistics" or "English Language" to boost your CV.</li>
+            </ul>
+
+            <h3>Script — Approaching the Recruitment Office</h3>
+            <div class="code-block">Bonjour, je m'appelle [Ton Nom], né le [JJ/MM/AAAA].
+Je voudrais régulariser mon recensement / connaître mon statut au service national
+et obtenir l'attestation de recensement nécessaire pour voyager.
+Quels documents dois-je fournir exactement et quelles sont les étapes à suivre ? Merci.</div>
+            <button class="copy-text-btn" onclick="copyText(this)">📋 Copy to Clipboard</button>
+
+            <h3>Attestation de Travail — Template to Give HR</h3>
+            <div class="code-block">[Entête de l'entreprise]
+
+Attestation de travail
+
+Je soussigné(e), [Nom du signataire], en qualité de [Fonction], certifie que
+M. [TON NOM] né le [JJ/MM/AAAA] a travaillé pour la société Noest Express
+du [Date de début] au [Date de fin / présent] en qualité de :
+
+- Agent d'expédition (Dispatch Agent) — traitement des colis à l'aide
+  de lecteur manuel (hand scanner).
+- Responsable de station / Station Supervisor — gestion de la caisse,
+  remises d'espèces aux clients, coordination des expéditions et gestion d'équipe.
+
+Cette attestation est délivrée à la demande de l'intéressé pour servir
+et valoir ce que de droit.
+
+Fait à [Ville], le [Date].
+Signature &amp; tampon</div>
+            <button class="copy-text-btn" onclick="copyText(this)">📋 Copy to Clipboard</button>
+
+            <h3>CV Bullets (English) — Copy-Paste Ready</h3>
+            <div class="code-block">Station Supervisor — Noest Express (MM/YYYY — Present)
+• Managed station cash flow up to [amount] DZD daily; reconciled receipts and performed refunds.
+• Processed 200–400 packages daily using handheld barcode scanners; coordinated dispatch
+  and prioritized urgent shipments.
+• Supervised and trained a team of [X] couriers; handled client escalations and customer service.
+• Kept inventory logs, prepared daily reports, and liaised with regional operations.
+• Languages: French (native), Arabic (native), English (intermediate)</div>
+            <button class="copy-text-btn" onclick="copyText(this)">📋 Copy to Clipboard</button>
+
+            <h3>Destination Routes</h3>
+            <div class="success-box">
+              <strong>🌍 Gulf (UAE / Qatar) — Fastest Route</strong><br>
+              Logistics/warehouse roles hire quickly; English + experience often beats a degree.
+              <ul style="margin-left:18px;margin-top:8px;">
+                <li>Apply remotely: <a href="https://careers.aramex.com/" target="_blank" rel="noopener">Aramex Careers ↗</a>, <a href="https://careers.dhl.com" target="_blank" rel="noopener">DHL Careers ↗</a>, <a href="https://www.gulftalent.com" target="_blank" rel="noopener">GulfTalent ↗</a>, <a href="https://www.bayt.com" target="_blank" rel="noopener">Bayt.com ↗</a>, <a href="https://ae.indeed.com" target="_blank" rel="noopener">Indeed UAE ↗</a></li>
+                <li>Negotiate visa sponsorship after job offer — avoid agencies charging large upfront fees</li>
+                <li>UAE Embassy visas: <a href="https://www.mofa.gov.ae/en/missions/algeria/services/visas" target="_blank" rel="noopener">mofa.gov.ae ↗</a></li>
+              </ul>
+            </div>
+            <ul>
+              <li><strong>Germany — Ausbildung / Chancenkarte:</strong> Learn German (B1/B2), apply for "Fachkraft für Lagerlogistik" apprenticeship. Permanent residency pathway.</li>
+              <li><strong>Canada — PNP:</strong> Saskatchewan / Alberta provincial nominees. Target logistics roles with LMIA employer support.</li>
+            </ul>
+
+            <h3>Realistic Budget: Dubai/Doha (early period)</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:.88rem;margin-top:8px">
+              <thead><tr style="border-bottom:2px solid var(--border)"><th style="padding:8px;text-align:left">Item</th><th style="padding:8px;text-align:left">Estimate</th></tr></thead>
+              <tbody>
+                <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Shared room / bedspace</td><td style="padding:8px">500–900 AED/month</td></tr>
+                <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Food (cook yourself)</td><td style="padding:8px">300–500 AED/month</td></tr>
+                <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Transport (metro/bus)</td><td style="padding:8px">100–200 AED/month</td></tr>
+                <tr><td style="padding:8px">Emergency buffer</td><td style="padding:8px">1,500–2,500 AED</td></tr>
+              </tbody>
+            </table>
+
+            <div class="quick-links-panel mt-16">
+              <h3>🔗 Quick Links</h3>
+              <ul>
+                <li><a href="https://passeport.interieur.gov.dz/fr/Accueil_Fr/Accueil" target="_blank" rel="noopener">Portail Passeport Biométrique (Algeria)</a></li>
+                <li><a href="https://www.mdn.dz/site_principal/sommaire/service/recencement_fr.php" target="_blank" rel="noopener">MDN — Recensement / Service National</a></li>
+                <li><a href="https://elhanaa.cnas.dz/" target="_blank" rel="noopener">ELHANAA — CNAS Relevé de Carrière</a></li>
+                <li><a href="https://careers.aramex.com/" target="_blank" rel="noopener">Aramex Careers</a></li>
+                <li><a href="https://careers.dhl.com/global/en/c/warehouse-and-package-handling-jobs" target="_blank" rel="noopener">DHL Warehouse &amp; Package Jobs</a></li>
+                <li><a href="https://www.gulftalent.com/uae/jobs/dubai/category/logistics" target="_blank" rel="noopener">GulfTalent — Logistics Jobs UAE</a></li>
+                <li><a href="https://www.bayt.com/en/uae/jobs/logistics-jobs/" target="_blank" rel="noopener">Bayt — Logistics Jobs (UAE)</a></li>
+                <li><a href="https://ae.indeed.com" target="_blank" rel="noopener">Indeed UAE</a></li>
+              </ul>
+            </div>
+          </div>
+    </div>
+
+    <!--  PAGE: MILITARY EXEMPTION GUIDE  -->
+    <div id="page-military" class="page-view page-iframe">
+      <iframe src="/military_exemption_guide.html" title="Military Exemption Guide"></iframe>
+    </div>
+
+    <!--  PAGE: E-COMMERCE MASTERY 2026  -->
+    <div id="page-ecommerce" class="page-view page-iframe">
+      <iframe src="/ecommerce-mastery-app.html" title="E-Commerce Mastery 2026"></iframe>
+    </div>
+
+    <!--  PAGE: FREE AI TOOLS FOR CREATIVES  -->
+    <div id="page-ai-creatives" class="page-view page-iframe">
+      <iframe src="/free-ai-product-creatives-guide.html" title="Free AI Tools for Creatives"></iframe>
+    </div>
+
+    <!--  PAGE: AI/ML CODING ROADMAP  -->
+    <div id="page-coding" class="page-view page-iframe">
+      <iframe src="/learn-coding_roadmap.html" title="AI/ML Coding Roadmap"></iframe>
+    </div>
+
+  </div><!-- /#main-content -->
+</div><!-- /#app-shell -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════════════════ -->
+
+<!-- Add/Edit Item Modal -->
+<div id="item-modal" class="modal-overlay">
+  <div class="modal">
+    <h2 id="item-modal-title">Add Item</h2>
+    <form id="item-form" novalidate>
+      <!-- Month badge -->
+      <div style="margin-bottom:14px;display:flex;align-items:center;gap:8px">
+        <span style="font-size:.78rem;color:var(--text-muted)">Month:</span>
+        <span id="item-month-display" style="font-size:.82rem;font-weight:700;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 10px;border-radius:20px"></span>
+        <input type="hidden" id="item-month" />
+      </div>
+      <!-- Type toggle -->
+      <div style="display:flex;gap:8px;margin-bottom:18px">
+        <button type="button" id="type-btn-expense" class="type-toggle type-toggle-expense type-toggle-active" onclick="setItemType('expense')">&#8722; Expense</button>
+        <button type="button" id="type-btn-income"  class="type-toggle type-toggle-income"                     onclick="setItemType('income')">&#43; Extra Income</button>
+        <input type="hidden" id="item-type" value="expense" />
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Label <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="item-label" placeholder="e.g. Rent, Groceries, Gym&#8230;" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Amount <span style="color:var(--danger)">*</span></label>
+          <input type="number" id="item-amount" min="0" step="0.01" placeholder="0.00" required />
+        </div>
+        <div class="form-group" id="category-group">
+          <label>Category / Tag
+            <span id="savings-hint" style="font-size:.72rem;color:var(--success);margin-left:4px" title="Use 'monthly savings' to auto-add to All-Time Savings">&#128161; &ldquo;monthly savings&rdquo; for auto-ledger</span>
+          </label>
+          <input type="text" id="item-category" placeholder="e.g. Housing, Food, monthly savings&#8230;" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="item-date" />
+        </div>
+        <div class="form-group" style="max-width:160px">
+          <label>Currency</label>
+          <input type="text" id="item-currency" placeholder="e.g. DZD, EUR, USD" maxlength="8" style="text-transform:uppercase;font-weight:600" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes (optional)</label>
+        <textarea id="item-notes" rows="2" placeholder="Any extra details&#8230;"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('item-modal')">Cancel</button>
+        <button type="submit" id="item-submit-btn" class="btn btn-primary">Save Expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tutorial Modal -->
+<div id="tutorial-modal" class="modal-overlay">
+  <div class="modal">
+    <h2>👋 Welcome to Life Advisor</h2>
+    <p style="font-size:.9rem;color:var(--text-muted);margin-bottom:18px">Here's a quick tour of what this app can do for you.</p>
+
+    <div class="tutorial-step">
+      <div class="tutorial-num">1</div>
+      <div class="tutorial-step-content">
+        <h4>Set Your Monthly Income</h4>
+        <p>Go to Savings &amp; Costs and enter your net monthly income. This enables automatic surplus calculation.</p>
+      </div>
+    </div>
+    <div class="tutorial-step">
+      <div class="tutorial-num">2</div>
+      <div class="tutorial-step-content">
+        <h4>Add Your Recurring Costs</h4>
+        <p>Add all monthly expenses (rent, food, transport, subscriptions) as <strong>cost</strong> items with "Recurring Monthly" checked.</p>
+      </div>
+    </div>
+    <div class="tutorial-step">
+      <div class="tutorial-num">3</div>
+      <div class="tutorial-step-content">
+        <h4>Track Your Savings</h4>
+        <p>Add a recurring monthly savings transfer as a <strong>saving</strong> item. One-off saving deposits also count toward your all-time savings total.</p>
+      </div>
+    </div>
+    <div class="tutorial-step">
+      <div class="tutorial-num">4</div>
+      <div class="tutorial-step-content">
+        <h4>Read the Life Guides</h4>
+        <p>Browse the consolidated guides — passport, military service, e-commerce, AI tools, and coding roadmap — with copy-paste templates.</p>
+      </div>
+    </div>
+    <div class="tutorial-step">
+      <div class="tutorial-num">5</div>
+      <div class="tutorial-step-content">
+        <h4>Backup Your Data</h4>
+        <p>Use "Save Snapshot" to create a timestamped backup in the <code>backups/</code> folder. Export JSON to share or transfer data.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeTutorial()">Get Started →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     INLINE TOOL SCRIPTS
+═══════════════════════════════════════════════════════════════ -->
+<script>
+function calcSurplus() {
+  const income  = parseFloat(document.getElementById('tool-income').value)  || 0;
+  const costs   = parseFloat(document.getElementById('tool-costs').value)   || 0;
+  const savings = parseFloat(document.getElementById('tool-savings').value) || 0;
+  if (income === 0 && costs === 0) { document.getElementById('surplus-result').style.display = 'none'; return; }
+  const surplus = income - costs;
+  const rate    = income > 0 ? ((savings / income) * 100).toFixed(1) : 0;
+  const yearly  = savings * 12;
+  document.getElementById('tool-surplus-val').textContent   = surplus.toLocaleString();
+  document.getElementById('tool-savings-rate').textContent  = rate + '%';
+  document.getElementById('tool-yearly-savings').textContent = yearly.toLocaleString();
+  document.getElementById('tool-surplus-val').style.color   = surplus >= 0 ? 'var(--success)' : 'var(--danger)';
+  document.getElementById('surplus-result').style.display   = 'block';
+}
+
+function calcGoal() {
+  const goal    = parseFloat(document.getElementById('goal-amount').value)  || 0;
+  const monthly = parseFloat(document.getElementById('goal-monthly').value) || 0;
+  const saved   = parseFloat(document.getElementById('goal-saved').value)   || 0;
+  const res     = document.getElementById('goal-result');
+  const txt     = document.getElementById('goal-result-text');
+  if (goal <= 0 || monthly <= 0) { res.style.display = 'none'; return; }
+  const remaining = Math.max(0, goal - saved);
+  if (remaining === 0) { txt.textContent = '🎉 Goal already reached!'; txt.style.color = 'var(--success)'; res.style.display = 'block'; return; }
+  const months = Math.ceil(remaining / monthly);
+  const years  = Math.floor(months / 12);
+  const mo     = months % 12;
+  let timeStr  = '';
+  if (years > 0) timeStr += `${years} year${years > 1 ? 's' : ''} `;
+  if (mo > 0 || years === 0) timeStr += `${mo} month${mo !== 1 ? 's' : ''}`;
+  txt.textContent = `⏱ Time to goal: ${timeStr.trim()} (${months} monthly deposits of ${monthly.toLocaleString()})`;
+  txt.style.color = 'var(--text)';
+  res.style.display = 'block';
+}
+</script>
+
+<script src="/static/js/local-api.js"></script>
+<script src="/static/js/app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function() {});
+  }
+</script>
+</body>
+</html>

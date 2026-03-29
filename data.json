@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "createdAt": "2026-02-20T00:00:00.000Z",
+    "lastModified": "2026-02-25T13:35:19.460Z"
+  },
+  "settings": {
+    "defaultCurrency": "DZD"
+  },
+  "months": {
+    "2026-02": {
+      "income": 0
+    },
+    "2026-03": {
+      "income": 0
+    }
+  },
+  "items": [
+    {
+      "id": "mm22lzityes7f",
+      "label": "bought usdt 10000",
+      "amount": 10000,
+      "type": "expense",
+      "date": "2026-02-25",
+      "month": "2026-02",
+      "category": "",
+      "notes": "",
+      "currency": "DZD",
+      "createdAt": "2026-02-25T13:28:58.901Z"
+    }
+  ],
+  "savingsLedger": [],
+  "transactions": []
+}

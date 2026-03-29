@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Master Plan: Logistics Career Abroad</title>
+    <style>
+        :root {
+            --primary: #007bff; /* Standard Blue */
+            --accent: #28a745; /* Success Green */
+            --danger: #dc3545; /* Warning Red */
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --bg: #ffffff;
+            --text: #212529;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #4da3ff;
+                --accent: #4ade80;
+                --danger: #ff6b6b;
+                --dark: #f8f9fa;
+                --light: #343a40;
+                --bg: #121212;
+                --text: #e0e0e0;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            background: linear-gradient(135deg, #0d6efd, #004396);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin: 0; font-size: 1.8rem; }
+        p.subtitle { opacity: 0.9; margin-top: 0.5rem; font-size: 1rem; }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            background: var(--light);
+            border-bottom: 2px solid var(--light);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            transition: 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            background: rgba(0, 123, 255, 0.05);
+        }
+
+        /* Content Sections */
+        .section {
+            display: none;
+            padding: 20px 0;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards and Elements */
+        .card {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card.warning { border-left-color: var(--danger); }
+        .card.success { border-left-color: var(--accent); }
+
+        h2 { border-bottom: 2px solid var(--light); padding-bottom: 0.5rem; color: var(--primary); }
+        h3 { margin-top: 1.5rem; color: var(--text); font-weight: 700; }
+
+        ul { padding-left: 20px; }
+        li { margin-bottom: 0.5rem; }
+
+        .tag {
+            display: inline-block;
+            background: var(--dark);
+            color: var(--bg);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 0.9rem; }
+        th { background-color: var(--light); }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.02);
+            border-radius: 5px;
+        }
+        .checklist-item input { margin-right: 10px; margin-top: 5px; transform: scale(1.2); }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Project Export: Logistics</h1>
+    <p class="subtitle">From Noest Express to International Supervisor</p>
+    <p style="font-size: 0.8rem; margin-top: 5px;">Profile: 25yo Male | Baccalaureate | 1 Yr College | 2 Yrs Logistics</p>
+</header>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="openTab(event, 'phase1')">1. Papers (DZ)</button>
+    <button class="tab-btn" onclick="openTab(event, 'phase2')">2. Gulf (Fast)</button>
+    <button class="tab-btn" onclick="openTab(event, 'phase3')">3. Europe/Canada</button>
+    <button class="tab-btn" onclick="openTab(event, 'phase4')">4. Housing & $$</button>
+</div>
+
+<div class="container">
+
+    <div id="phase1" class="section active">
+        <h2>Phase 1: The Foundation in Algeria</h2>
+        <p>You cannot leave without fixing these three things. Do this while keeping your current job.</p>
+
+        <div class="card warning">
+            <h3>🚨 The "Carte Jaune" (Military Service)</h3>
+            <p>This is your #1 blocker. Border police will not let you exit without a card or a "Sursis" (deferment).</p>
+            <p><strong>Your Status:</strong> You are 25. You are likely in "Insoumis" status unless you have a student deferment.</p>
+            <p><strong>Immediate Actions:</strong></p>
+            <ul>
+                <li><strong>Option A (Fastest for Travel):</strong> Medical Exemption ("Dossier Médical"). If you have *any* chronic issue (asthma, bad vision, back pain from lifting packages), go to a private specialist, get a detailed report, and submit it to the military tribunal or recruitment office.</li>
+                <li><strong>Option B (The "Student" Loophole):</strong> Enroll in a <strong>CFPA or INSFP</strong> vocational school immediately (Feb or Sept session).
+                    <br><em>Why?</em> It gives you a "Certificat de Scolarité" -> New Sursis valid for travel.
+                    <br><em>Bonus:</em> Choose a course like "Transport & Logistics" or "English Language" to boost your CV.
+                </li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>📄 Documenting Noest Express</h3>
+            <p>Your 2 years at Noest Express are your ticket out. You must prove this experience on paper.</p>
+            <div class="checklist-item">
+                <input type="checkbox"> 
+                <div><strong>Work Certificate (Attestation de Travail):</strong> Must explicitly say "Supervisor" or "Dispatch Agent". Avoid "Manutentionnaire" (Laborer) if possible.</div>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox"> 
+                <div><strong>CNAS Affiliation (Historique):</strong> Visa officers trust CNAS records more than company letters. Print your "Relevé de Carrière".</div>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox"> 
+                <div><strong>Recommendation Letter:</strong> Ask your Station Manager to write a letter in English/French saying: <em>"Mr. [Name] managed the station cash flow, supervised dispatch using handheld scanners, and handled client resolution."</em></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🛂 Passport & Language</h3>
+            <ul>
+                <li><strong>Biometric Passport:</strong> Ensure it has at least 2 years of validity left.</li>
+                <li><strong>English Test:</strong> If you aim for Canada/Gulf, you need proof. Start practicing for <strong>IELTS General Training</strong>. You need a score of 5.0+ for Gulf (informal) and 6.0+ for Canada/Europe.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="phase2" class="section">
+        <h2>Phase 2: The Gulf (UAE/Qatar)</h2>
+        <p class="subtitle">The "Stepping Stone" Strategy. Easier entry than Europe, good for saving money.</p>
+
+        <div class="card success">
+            <h3>Why this is your best bet</h3>
+            <p>The Gulf needs <strong>English-speaking Logistics Supervisors</strong>. Your experience with "hand scanners" and "station management" is exactly what Amazon, Noon, Aramex, and Talabat need in Dubai/Doha.</p>
+        </div>
+
+        <h3>Job Strategy (Do this from Algeria)</h3>
+        <p>Do not just "go and look" (Harraga style) unless you have savings. Try to secure an interview first.</p>
+        
+        <table style="width:100%">
+            <tr>
+                <th>Platform</th>
+                <th>Action</th>
+            </tr>
+            <tr>
+                <td><strong>LinkedIn</strong></td>
+                <td>Update profile to "Logistics Supervisor". Connect with recruiters at <em>Aramex, DHL Dubai, Noon</em>.</td>
+            </tr>
+            <tr>
+                <td><strong>GulfTalent / Bayt</strong></td>
+                <td>Create profile. Upload the Noest Express CV. Search for "Warehouse Team Leader" or "Dispatch Supervisor".</td>
+            </tr>
+            <tr>
+                <td><strong>Agencies (Algiers)</strong></td>
+                <td>Visit legit agencies like <strong>Emploitic</strong> or check the "Bureau de Main d'Oeuvre" in Hydra/Ben Aknoun. Warning: <em>Never pay for a job offer.</em> Only pay for processing <em>after</em> you sign a contract.</td>
+            </tr>
+        </table>
+
+        <div class="card">
+            <h3>The "Visit Visa" Gamble</h3>
+            <p>If you have savings (approx 20-30 Million Centimes), you can go on a 3-month tourist visa to Dubai to hunt for jobs.</p>
+            <ol>
+                <li><strong>Visa:</strong> Easy to get (e-visa) via agencies in Algiers (approx 30,000 DZD).</li>
+                <li><strong>Timing:</strong> Go in <strong>October-April</strong> (hiring season + cooler weather). Avoid Ramadan and Summer.</li>
+                <li><strong>The Hustle:</strong> Walk into warehouses in <strong>Dubai Investment Park (DIP)</strong> or <strong>Al Quoz</strong> industrial areas with your CV in hand. Ask for the "Operations Manager".</li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="phase3" class="section">
+        <h2>Phase 3: The Long Game (Europe/Canada)</h2>
+        <p class="subtitle">Harder, but permanent residency.</p>
+
+        <div class="card warning">
+            <h3>🇩🇪 Germany: The "Chancenkarte" Opportunity</h3>
+            <p>Germany now has an "Opportunity Card" for job seekers. However, it requires <strong>2 years of vocational training</strong>.</p>
+            <p><strong>Your Problem:</strong> You dropped out of college after 1 year.</p>
+            <p><strong>The Fix (Germany Plan):</strong></p>
+            <ul>
+                <li><strong>Option A (Ausbildung):</strong> Apply for a German Apprenticeship (Ausbildung) as a "Fachkraft für Lagerlogistik" (Logistics Specialist). You work and study.
+                    <br><em>Requirement:</em> B1/B2 German level. Start learning German at Goethe Institut Algiers NOW.</li>
+                <li><strong>Option B (The Upgrade):</strong> Finish a TS (Technicien Supérieur) diploma in Algeria (INSFP) in Logistics (30 months). Then you are eligible for the Chancenkarte.</li>
+            </ul>
+        </div>
+
+        <div class="card success">
+            <h3>🇨🇦 Canada: The Saskatchewan (SINP) Route</h3>
+            <p>Most of Canada is too hard without a degree. But <strong>Saskatchewan</strong> is desperate for logistics workers.</p>
+            <ul>
+                <li><strong>Target Program:</strong> <a href="#">SINP International Skilled Worker</a>.</li>
+                <li><strong>Target NOC Codes:</strong>
+                    <ul>
+                        <li><strong>NOC 12013:</strong> Supervisors, supply chain, tracking and scheduling.</li>
+                        <li><strong>NOC 14400:</strong> Shippers and Receivers (might be low skill, harder).</li>
+                    </ul>
+                </li>
+                <li><strong>The Hurdle:</strong> You usually need a job offer OR very high English scores (CLB 7/8).</li>
+                <li><strong>Action:</strong> If you get a Supervisor title on your work certificate, calculate your SINP points. If you have a relative in Canada, this becomes much easier.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="phase4" class="section">
+        <h2>Phase 4: Where to Stay & Budget</h2>
+
+        <div class="card">
+            <h3>🇦🇪 Dubai / Doha (On Arrival)</h3>
+            <p><strong>Housing:</strong> Do not rent an apartment. Look for "Bed Space" or "Partition".</p>
+            <ul>
+                <li><strong>Cost:</strong> 500 - 800 AED/month (approx 2-3 Million DZD equivalent, but you pay in AED).</li>
+                <li><strong>Locations (Dubai):</strong> Deira (cheaper, crowded), Al Barsha (cleaner, more expensive), International City (cheap, far).</li>
+                <li><strong>Food:</strong> Cook at home. 300 AED/month.</li>
+                <li><strong>Transport:</strong> Metro card (Nol Card).</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>🇨🇦 Canada (If successful)</h3>
+            <p><strong>Housing:</strong> You will likely rent a "Basement Suite" or a room in a shared house.</p>
+            <ul>
+                <li><strong>Cost:</strong> $600 - $900 CAD/month.</li>
+                <li><strong>Initial Cash Needed:</strong> You need to show "Proof of Funds" for the visa (approx $13,000 CAD) unless you have a valid job offer. This is the hardest part for Algerians.</li>
+            </ul>
+        </div>
+
+        <div class="card warning">
+            <h3>💰 Savings Plan (The "Caisse")</h3>
+            <p>You manage the "caisse" at work. Manage your own now.</p>
+            <ul>
+                <li><strong>Goal:</strong> 500,000 DZD (50 Million Centimes).</li>
+                <li><strong>Why:</strong> Passport (6,000), Ticket to Dubai (60,000-80,000), Visa (30,000), 2 months survival cash (equivalent of $1000 USD).</li>
+                <li><strong>Currency:</strong> Buy Euro/USD on the parallel market (Square Port Said) <em>slowly</em>. Don't buy all at once before travel.</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function openTab(evt, sectionName) {
+        var i, section, tabBtn;
+        section = document.getElementsByClassName("section");
+        for (i = 0; i < section.length; i++) {
+            section[i].style.display = "none";
+            section[i].classList.remove("active");
+        }
+        tabBtn = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tabBtn.length; i++) {
+            tabBtn[i].className = tabBtn[i].className.replace(" active", "");
+        }
+        document.getElementById(sectionName).style.display = "block";
+        document.getElementById(sectionName).classList.add("active");
+        evt.currentTarget.className += " active";
+    }
+</script>
+
+</body>
+</html>
