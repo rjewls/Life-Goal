@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="80" fill="#1a1a2e"/>
-  <rect x="40" y="40" width="432" height="432" rx="60" fill="#16213e"/>
-  <text x="256" y="300" font-family="system-ui,sans-serif" font-size="260" text-anchor="middle" fill="#f0f0f0">&#127775;</text>
-  <text x="256" y="470" font-family="system-ui,sans-serif" font-size="52" font-weight="bold" text-anchor="middle" fill="#a0aec0" letter-spacing="2">LIFE</text>
-</svg>

@@ -31,28 +31,6 @@ function monthLabelFE(ym) {
     .toLocaleString('en-US', { month: 'long', year: 'numeric' });
 }
 
-/* ── Mode detection ─────────────────────────────────────────
-   IS_SERVER_MODE starts false. detectMode() (called in
-   DOMContentLoaded) does a quick probe to /api/data.
-   - localhost OR phone on same WiFi via http://[PC-IP]:port → true
-   - GitHub Pages PWA / offline → false
-   The `api` Proxy below reads IS_SERVER_MODE dynamically so the
-   whole app works correctly in both modes with zero other changes.
----------------------------------------------------------- */
-let IS_SERVER_MODE = false;
-
-async function detectMode() {
-  try {
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 2000);
-    const res   = await fetch('/api/data', { signal: ctrl.signal });
-    clearTimeout(timer);
-    IS_SERVER_MODE = res.ok;
-  } catch {
-    IS_SERVER_MODE = false;
-  }
-}
-
 /* -- API helpers -------------------------------------------- */
 const API = '/api';
 
@@ -66,7 +44,7 @@ async function apiFetch(path, opts = {}) {
   return json;
 }
 
-const serverApi = {
+const api = {
   getData:          ()          => apiFetch('/data'),
   getSummary:       (month)     => apiFetch('/summary' + (month ? `?month=${encodeURIComponent(month)}` : '')),
   postData:         (body)      => apiFetch('/data',                  { method: 'POST',   body: JSON.stringify(body) }),
@@ -84,11 +62,6 @@ const serverApi = {
   deleteLedgerEntry:(id)        => apiFetch(`/savings-ledger/${id}`, { method: 'DELETE' }),
 };
 
-/* Dynamically delegates to serverApi or localApi based on detected mode */
-const api = new Proxy({}, {
-  get(_, prop) { return (IS_SERVER_MODE ? serverApi : localApi)[prop]; }
-});
-
 /* -- Currency formatter ------------------------------------- */
 function fmt(n, currency = '') {
   const abs = Math.abs(Number(n) || 0);
@@ -103,6 +76,37 @@ function fmtShort(n, currency = '') {
   else if (Math.abs(v) >= 1000) str = (v / 1000).toFixed(1) + 'k';
   else                          str = v.toLocaleString();
   return currency ? `${str} ${currency}` : str;
+}
+
+/* -- Recurrence helpers ------------------------------------- */
+function addDurationFE(date, count, unit) {
+  const d = new Date(date);
+  if      (unit === 'day')   d.setDate(d.getDate() + count);
+  else if (unit === 'week')  d.setDate(d.getDate() + count * 7);
+  else if (unit === 'month') d.setMonth(d.getMonth() + count);
+  else if (unit === 'year')  d.setFullYear(d.getFullYear() + count);
+  return d;
+}
+
+function describeRecurrence(item) {
+  if (!item.is_recurring) return null;
+  const ev  = item.recur_every || 1;
+  const u   = item.recur_unit  || 'month';
+  const uN  = { day: 'day', week: 'week', month: 'month', year: 'year' };
+  const un  = uN[u] || u;
+  let str   = ev === 1 ? `Every ${un}` : `Every ${ev} ${un}s`;
+  const et  = item.recur_end_type || 'ongoing';
+  if (et === 'duration' && item.recur_duration_count) {
+    const dc  = item.recur_duration_count;
+    const du  = item.recur_duration_unit || 'month';
+    const dun = uN[du] || du;
+    str += ` · for ${dc} ${dc === 1 ? dun : dun + 's'}`;
+  } else if (et === 'date' && item.recur_end_date) {
+    str += ` · until ${item.recur_end_date}`;
+  } else {
+    str += ' · ongoing';
+  }
+  return str;
 }
 
 /* -- Toast -------------------------------------------------- */
@@ -328,21 +332,30 @@ function _renderItemsTable() {
     return;
   }
   tbody.innerHTML = items.map(item => {
-    const isIncome  = (item.type || 'expense') === 'income';
-    const isSaving  = !isIncome && (item.category || '').toLowerCase() === 'monthly savings';
-    const rowStyle  = isIncome ? 'background:rgba(16,185,129,.06)' : isSaving ? 'background:rgba(16,185,129,.04)' : '';
-    const amtColor  = isIncome ? 'var(--success)' : 'var(--danger)';
-    const amtPrefix = isIncome ? '+' : '';
-    const catBadge  = isIncome
+    const isIncome   = (item.type || 'expense') === 'income';
+    const isSaving   = !isIncome && (item.category || '').toLowerCase() === 'monthly savings';
+    const isRecurring = Boolean(item.is_recurring);
+    const occ        = item._occurrences || 1;
+    const rowStyle   = isIncome ? 'background:rgba(16,185,129,.06)' : isSaving ? 'background:rgba(16,185,129,.04)' : '';
+    const amtColor   = isIncome ? 'var(--success)' : 'var(--danger)';
+    const amtPrefix  = isIncome ? '+' : '';
+    const catBadge   = isIncome
       ? `<span class="category-badge" style="background:rgba(16,185,129,.15);color:var(--success);border-color:rgba(16,185,129,.3)">&#43; extra income</span>`
       : isSaving
         ? `<span class="category-badge savings-cat">&#x2713; monthly savings</span>`
         : `<span class="category-badge">${escHtml(item.category || '\u2014')}</span>`;
+    const recurDesc  = isRecurring ? describeRecurrence(item) : '';
+    const recurBadge = isRecurring
+      ? `<span class="category-badge" style="background:rgba(99,102,241,.1);color:var(--accent);border-color:rgba(99,102,241,.3);display:block;margin-top:3px;font-size:.7rem;white-space:nowrap" title="${escHtml(recurDesc)}">&#x1F501; ${escHtml(recurDesc)}</span>`
+      : '';
+    const amtDisplay = isRecurring && occ > 1
+      ? `${amtPrefix}${fmt(item.amount)} <span style="font-size:.75rem;color:var(--text-muted);font-weight:400">&times;${occ} = ${fmt(item.amount * occ)} ${escHtml(item.currency || dc)}</span>`
+      : `${amtPrefix}${fmt(item.amount)} <span style="font-size:.75rem;color:var(--text-muted);font-weight:400">${escHtml(item.currency || dc)}</span>`;
     return `
       <tr data-id="${item.id}" style="${rowStyle}">
         <td style="font-weight:${(isSaving || isIncome) ? '600' : '400'}">${escHtml(item.label)}</td>
-        <td style="font-weight:600;color:${amtColor}">${amtPrefix}${fmt(item.amount)} <span style="font-size:.75rem;color:var(--text-muted);font-weight:400">${escHtml(item.currency || dc)}</span></td>
-        <td>${catBadge}</td>
+        <td style="font-weight:600;color:${amtColor}">${amtDisplay}</td>
+        <td>${catBadge}${recurBadge}</td>
         <td class="text-muted" style="font-size:.83rem">${item.date || ''}</td>
         <td>
           <button class="btn-icon" title="Edit"   onclick="openEditItem('${item.id}')">&#9998;</button>
@@ -480,12 +493,38 @@ function setItemType(type) {
   if (hint) hint.style.display = isIncome ? 'none' : '';
   const catGroup = document.getElementById('category-group');
   if (catGroup) catGroup.style.display = isIncome ? 'none' : '';
+  const recurSection = document.getElementById('recur-section');
+  if (recurSection) {
+    recurSection.style.display = isIncome ? 'none' : '';
+    if (isIncome) setRecurring(false);
+  }
+}
+
+function setRecurring(on) {
+  document.getElementById('item-is-recurring').value      = on ? 'true' : 'false';
+  document.getElementById('recur-btn-once').className      = 'type-toggle type-toggle-expense' + (!on ? ' type-toggle-active' : '');
+  document.getElementById('recur-btn-recurring').className = 'type-toggle type-toggle-income'  + (on  ? ' type-toggle-active' : '');
+  document.getElementById('recur-details').style.display   = on ? '' : 'none';
+}
+
+function onRecurEndTypeChange() {
+  const val = document.getElementById('recur-end-type').value;
+  document.getElementById('recur-duration-row').style.display = val === 'duration' ? '' : 'none';
+  document.getElementById('recur-enddate-row').style.display  = val === 'date'     ? '' : 'none';
 }
 
 function openAddItem() {
   state.editingId = null;
   document.getElementById('item-form').reset();
   setItemType('expense');
+  setRecurring(false);
+  document.getElementById('recur-end-type').value       = 'ongoing';
+  document.getElementById('recur-every').value          = '1';
+  document.getElementById('recur-unit').value           = 'month';
+  document.getElementById('recur-duration-count').value = '1';
+  document.getElementById('recur-duration-unit').value  = 'month';
+  document.getElementById('recur-end-date').value       = '';
+  onRecurEndTypeChange();
   const ym = state.currentMonth;
   document.getElementById('item-month').value               = ym;
   document.getElementById('item-month-display').textContent = monthLabelFE(ym);
@@ -509,6 +548,17 @@ function openEditItem(id) {
   document.getElementById('item-notes').value               = item.notes || '';
   document.getElementById('item-currency').value            = (item.currency || state.data?.settings?.defaultCurrency || 'DZD').toUpperCase();
   setItemType(item.type || 'expense');
+  // Populate recurring fields
+  const isRec   = Boolean(item.is_recurring);
+  const endType = item.recur_end_type || 'ongoing';
+  setRecurring(isRec);
+  document.getElementById('recur-every').value          = item.recur_every          || 1;
+  document.getElementById('recur-unit').value           = item.recur_unit           || 'month';
+  document.getElementById('recur-end-type').value       = endType;
+  document.getElementById('recur-duration-count').value = item.recur_duration_count || 1;
+  document.getElementById('recur-duration-unit').value  = item.recur_duration_unit  || 'month';
+  document.getElementById('recur-end-date').value       = item.recur_end_date       || '';
+  onRecurEndTypeChange();
   openModal('item-modal');
 }
 
@@ -516,6 +566,7 @@ async function submitItemForm(e) {
   e.preventDefault();
   const ym   = document.getElementById('item-month').value || state.currentMonth;
   const type = document.getElementById('item-type').value || 'expense';
+  const isRecurring = document.getElementById('item-is-recurring').value === 'true';
   const body = {
     label:    document.getElementById('item-label').value.trim(),
     amount:   parseFloat(document.getElementById('item-amount').value),
@@ -524,8 +575,21 @@ async function submitItemForm(e) {
     notes:    document.getElementById('item-notes').value.trim(),
     currency: (document.getElementById('item-currency').value.trim() || state.data?.settings?.defaultCurrency || 'DZD').toUpperCase(),
     month:    ym,
-    type:     type
+    type:     type,
+    is_recurring: isRecurring,
   };
+  if (isRecurring) {
+    body.recur_every = parseInt(document.getElementById('recur-every').value) || 1;
+    body.recur_unit  = document.getElementById('recur-unit').value || 'month';
+    const endType    = document.getElementById('recur-end-type').value || 'ongoing';
+    body.recur_end_type = endType;
+    if (endType === 'duration') {
+      body.recur_duration_count = parseInt(document.getElementById('recur-duration-count').value) || 1;
+      body.recur_duration_unit  = document.getElementById('recur-duration-unit').value || 'month';
+    } else if (endType === 'date') {
+      body.recur_end_date = document.getElementById('recur-end-date').value || null;
+    }
+  }
   if (!body.label)                          { toast('Label is required', 'error'); return; }
   if (isNaN(body.amount) || body.amount < 0){ toast('Amount must be \u2265 0', 'error'); return; }
   try {
@@ -548,7 +612,10 @@ async function confirmDeleteItem(id) {
   const item = (state.monthData?.items || []).find(i => i.id === id)
             || (state.data.items || []).find(i => i.id === id);
   if (!item) return;
-  if (!confirm(`Delete "${item.label}"?`)) return;
+  const msg = item.is_recurring
+    ? `Delete recurring item "${item.label}"?\nThis removes ALL past and future occurrences.`
+    : `Delete "${item.label}"?`;
+  if (!confirm(msg)) return;
   try {
     await api.deleteItem(id);
     toast('Expense deleted', 'info');
@@ -567,10 +634,7 @@ async function confirmDeleteItem(id) {
    EXPORT / IMPORT / BACKUP
 ---------------------------------------------------------- */
 
-function exportData() {
-  if (IS_SERVER_MODE) { window.location.href = '/api/export'; }
-  else                { localApi.exportData(); }
-}
+function exportData() { window.location.href = '/api/export'; }
 
 function importData() {
   const input = document.createElement('input');
@@ -607,25 +671,12 @@ async function saveBackup() {
 async function renderSettingsPage() {
   const dcEl = document.getElementById('settings-default-currency');
   if (dcEl) dcEl.value = state.data?.settings?.defaultCurrency || 'DZD';
-
-  // Show sync panel only in local/PWA mode
-  const syncSection = document.getElementById('sync-section');
-  if (syncSection) {
-    syncSection.style.display = IS_SERVER_MODE ? 'none' : 'block';
-    if (!IS_SERVER_MODE) {
-      const urlInput = document.getElementById('sync-url-input');
-      if (urlInput && !urlInput.value) urlInput.value = getSyncUrl();
-    }
-  }
-
   try {
     const backups = await api.getBackups();
     const ul = document.getElementById('backups-list');
     ul.innerHTML = backups.length
       ? backups.map(f => `<li><span style="font-size:.88rem;font-family:monospace">${escHtml(f)}</span></li>`).join('')
-      : IS_SERVER_MODE
-        ? '<li class="text-muted" style="font-size:.88rem">No backups yet.</li>'
-        : '<li class="text-muted" style="font-size:.88rem">Use \u201cSave Snapshot\u201d to download a backup to your device.</li>';
+      : '<li class="text-muted" style="font-size:.88rem">No backups yet.</li>';
   } catch { /* ignore */ }
 }
 
@@ -652,93 +703,6 @@ async function resetAllData() {
     renderDashboard();
     toast('Data reset complete', 'info');
   } catch (err) { toast('Error: ' + err.message, 'error'); }
-}
-
-/* ----------------------------------------------------------
-   SYNC WITH PC SERVER  (local / PWA mode only)
----------------------------------------------------------- */
-function _setSyncStatus(el, text, color) {
-  if (!el) return;
-  el.textContent = text;
-  el.style.color = color || 'var(--text-muted)';
-}
-
-function doSaveSyncUrl() {
-  const urlInput = document.getElementById('sync-url-input');
-  if (!urlInput) return;
-  const url = urlInput.value.trim();
-  if (!url) { toast('Enter a server URL first', 'error'); return; }
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    toast('URL must start with http:// (e.g. http://192.168.1.50:3001)', 'error'); return;
-  }
-  saveSyncUrl(url);
-  toast('Server URL saved', 'success');
-}
-
-async function doSyncPull() {
-  const urlInput = document.getElementById('sync-url-input');
-  const statusEl = document.getElementById('sync-status');
-  const url = (urlInput?.value || getSyncUrl()).trim().replace(/\/$/, '');
-  if (!url) { toast('Enter the PC server URL in Settings → Sync first', 'error'); return; }
-  saveSyncUrl(url);
-
-  if (window.location.protocol === 'https:' && url.startsWith('http://')) {
-    const msg = '\u26a0\ufe0f Mixed content blocked by browser. Open the app via ' + url + ' on your phone for sync to work.';
-    _setSyncStatus(statusEl, msg, 'var(--warning, orange)');
-    toast(msg, 'error', 7000);
-    return;
-  }
-
-  _setSyncStatus(statusEl, '\u23f3 Connecting to server\u2026', '');
-  try {
-    const reachable = await checkServerReachable(url);
-    if (!reachable) {
-      _setSyncStatus(statusEl, '\u274c Cannot reach server. Is server.js running? Are you on the same Wi-Fi?', 'var(--danger)');
-      return;
-    }
-    _setSyncStatus(statusEl, '\u2b07\ufe0f Downloading data from PC\u2026', '');
-    const data = await syncPullFromServer(url);
-    state.data = data;
-    await loadData();
-    renderDashboard();
-    if (state.currentPage === 'savings') await renderSavingsPage();
-    _setSyncStatus(statusEl, '\u2705 Pulled from PC \u2014 ' + new Date().toLocaleTimeString(), 'var(--success)');
-    toast('Data pulled from PC server!', 'success');
-  } catch (err) {
-    _setSyncStatus(statusEl, '\u274c Sync failed: ' + err.message, 'var(--danger)');
-    toast('Sync failed: ' + err.message, 'error');
-  }
-}
-
-async function doSyncPush() {
-  const urlInput = document.getElementById('sync-url-input');
-  const statusEl = document.getElementById('sync-status');
-  const url = (urlInput?.value || getSyncUrl()).trim().replace(/\/$/, '');
-  if (!url) { toast('Enter the PC server URL in Settings \u2192 Sync first', 'error'); return; }
-  saveSyncUrl(url);
-
-  if (window.location.protocol === 'https:' && url.startsWith('http://')) {
-    const msg = '\u26a0\ufe0f Mixed content blocked by browser. Open the app via ' + url + ' on your phone for sync to work.';
-    _setSyncStatus(statusEl, msg, 'var(--warning, orange)');
-    toast(msg, 'error', 7000);
-    return;
-  }
-
-  _setSyncStatus(statusEl, '\u23f3 Connecting to server\u2026', '');
-  try {
-    const reachable = await checkServerReachable(url);
-    if (!reachable) {
-      _setSyncStatus(statusEl, '\u274c Cannot reach server. Is server.js running? Are you on the same Wi-Fi?', 'var(--danger)');
-      return;
-    }
-    _setSyncStatus(statusEl, '\u2b06\ufe0f Uploading data to PC\u2026', '');
-    await syncPushToServer(url);
-    _setSyncStatus(statusEl, '\u2705 Pushed to PC \u2014 ' + new Date().toLocaleTimeString(), 'var(--success)');
-    toast('Data pushed to PC server!', 'success');
-  } catch (err) {
-    _setSyncStatus(statusEl, '\u274c Sync failed: ' + err.message, 'var(--danger)');
-    toast('Sync failed: ' + err.message, 'error');
-  }
 }
 
 /* ----------------------------------------------------------
@@ -795,7 +759,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  await detectMode();
   await loadData();
   navigate('dashboard', false);
 
@@ -828,7 +791,4 @@ window.closeTutorial               = closeTutorial;
 window.toggleCollapsible           = toggleCollapsible;
 window.copyText                    = copyText;
 window.applyFilter                 = applyFilter;
-window.doSaveSyncUrl               = doSaveSyncUrl;
-window.doSyncPull                  = doSyncPull;
-window.doSyncPush                  = doSyncPush;
 
