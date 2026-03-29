@@ -486,16 +486,11 @@
       <div class="card settings-section">
         <h3>📦 Data Management</h3>
         <div class="btn-group mb-16">
-          <button class="btn btn-outline" onclick="exportData()">⬇ Export data.json</button>
-          <button class="btn btn-outline" onclick="importData()">⬆ Import data.json</button>
-          <button class="btn btn-success" onclick="saveBackup()">💾 Save Snapshot Backup</button>
+          <button class="btn btn-outline" onclick="exportData()">&#11015; Export JSON</button>
+          <button class="btn btn-outline" onclick="importData()">&#11014; Import JSON</button>
+          <button class="btn btn-success" onclick="saveBackup()">&#128190; Download Snapshot</button>
         </div>
-        <p style="font-size:.85rem;color:var(--text-muted)">Backups are saved in the <code>backups/</code> folder in the project root with a timestamp filename.</p>
-        <hr class="divider" />
-        <h4 style="margin-bottom:10px;font-size:.92rem">Existing Backups</h4>
-        <ul id="backups-list" style="list-style:none;display:flex;flex-direction:column;gap:5px">
-          <li class="text-muted" style="font-size:.88rem">Loading…</li>
-        </ul>
+        <p style="font-size:.85rem;color:var(--text-muted)">Snapshots and exports are downloaded directly to your device as a timestamped <code>.json</code> file. Keep copies in a safe place.</p>
       </div>
 
       <div class="card settings-section">
@@ -506,7 +501,7 @@
 
       <div class="card settings-section">
         <h3>ℹ️ About</h3>
-        <p style="font-size:.88rem;color:var(--text-muted)">Life Advisor v1.0 — Data is stored in <code>data.json</code> in the project root. Backups are stored in <code>backups/</code>. Serve with <code>node server.js</code> on port 3000.</p>
+        <p style="font-size:.88rem;color:var(--text-muted)">Life Advisor v2.0 — Data stored in <strong>Supabase</strong> (cloud PostgreSQL). Accessible from any device, no local server needed.</p>
         <button class="btn btn-outline btn-sm mt-8" onclick="openTutorial()">📖 View Tutorial</button>
       </div>
     </div>
@@ -857,6 +852,7 @@ function calcGoal() {
 }
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/static/js/app.js"></script>
 </body>
 </html>

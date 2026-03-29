@@ -31,35 +31,287 @@ function monthLabelFE(ym) {
     .toLocaleString('en-US', { month: 'long', year: 'numeric' });
 }
 
-/* -- API helpers -------------------------------------------- */
-const API = '/api';
+/* -- Supabase client --------------------------------------- */
+const SUPABASE_URL      = 'https://fwhdqmtktqndcwyqtaoy.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3aGRxbXRrdHFuZGN3eXF0YW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MzM0NjYsImV4cCI6MjA5MDMwOTQ2Nn0.omBvqsAqhSbxCGsJHSbd1r8cwEIw_Y6GfUFeNu5V52w';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-async function apiFetch(path, opts = {}) {
-  const res = await fetch(API + path, {
-    headers: { 'Content-Type': 'application/json' },
-    ...opts
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error || json.errors?.join(', ') || `HTTP ${res.status}`);
-  return json;
+/* -- DB helpers -------------------------------------------- */
+function _newId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function _dbRowToItem(r) {
+  return {
+    id: r.id, label: r.label, amount: parseFloat(r.amount) || 0,
+    type: r.type || 'expense', date: r.date || null, month: r.month,
+    category: r.category || '', notes: r.notes || '',
+    currency: r.currency || 'DZD', createdAt: r.created_at,
+    is_recurring: r.is_recurring || false,
+    recur_every: r.recur_every ?? null, recur_unit: r.recur_unit ?? null,
+    recur_end_type: r.recur_end_type ?? null,
+    recur_duration_count: r.recur_duration_count ?? null,
+    recur_duration_unit:  r.recur_duration_unit  ?? null,
+    recur_end_date:       r.recur_end_date        ?? null,
+  };
+}
+function _dbRowToLedger(r) {
+  return {
+    id: r.id, itemId: r.item_id || null,
+    amount: parseFloat(r.amount) || 0, currency: r.currency || 'DZD',
+    date: r.date || null, month: r.month || null,
+    source: r.source, label: r.label || '',
+  };
+}
+async function _readData() {
+  const [
+    { data: sRow, error: se },
+    { data: mRows, error: me },
+    { data: iRows, error: ie },
+    { data: lRows, error: le },
+  ] = await Promise.all([
+    _sb.from('settings').select('*').eq('id', 'default').maybeSingle(),
+    _sb.from('months').select('*'),
+    _sb.from('items').select('*').order('created_at', { ascending: true }),
+    _sb.from('savings_ledger').select('*'),
+  ]);
+  if (se || me || ie || le) throw new Error((se || me || ie || le).message);
+  const months = {};
+  for (const r of (mRows || [])) months[r.ym] = { income: parseFloat(r.income) || 0 };
+  return {
+    meta: { lastModified: new Date().toISOString() },
+    settings: { defaultCurrency: sRow?.default_currency || 'DZD' },
+    months,
+    items:         (iRows || []).map(_dbRowToItem),
+    savingsLedger: (lRows || []).map(_dbRowToLedger),
+    transactions: [],
+  };
+}
+function _computeMonthSummary(data, month) {
+  const dc  = (data.settings?.defaultCurrency || 'DZD').toUpperCase();
+  const inc = Number(data.months?.[month]?.income) || 0;
+  let totalCosts = 0, extraIncome = 0, monthlySavingsAmt = 0;
+  for (const item of (data.items || [])) {
+    const occ = _recurOccurrencesInMonth(item, month);
+    if (!occ) continue;
+    const amt = (Number(item.amount) || 0) * occ;
+    if ((item.type || 'expense') === 'income') extraIncome += amt;
+    else {
+      totalCosts += amt;
+      if ((item.category || '').toLowerCase().trim() === 'monthly savings') monthlySavingsAmt += amt;
+    }
+  }
+  const remaining   = inc + extraIncome - totalCosts;
+  const surplusUsed = (data.savingsLedger || []).some(e => e.month === month && e.source === 'surplus');
+  return { month, income: inc, extraIncome, totalCosts, monthlySavings: monthlySavingsAmt, remaining, surplusUsed, currency: dc };
+}
+function _computeAllTimeSavings(data) {
+  const dc = (data.settings?.defaultCurrency || 'DZD').toUpperCase();
+  const byCurrency = {};
+  for (const e of (data.savingsLedger || [])) {
+    const cur = (e.currency || dc).toUpperCase();
+    byCurrency[cur] = (byCurrency[cur] || 0) + (Number(e.amount) || 0);
+  }
+  return { byCurrency, defaultCurrency: dc, total: byCurrency[dc] || 0 };
 }
 
+/* -- api object (calls Supabase directly) ------------------- */
 const api = {
-  getData:          ()          => apiFetch('/data'),
-  getSummary:       (month)     => apiFetch('/summary' + (month ? `?month=${encodeURIComponent(month)}` : '')),
-  postData:         (body)      => apiFetch('/data',                  { method: 'POST',   body: JSON.stringify(body) }),
-  addItem:          (item)      => apiFetch('/items',                 { method: 'POST',   body: JSON.stringify(item) }),
-  updateItem:       (id, b)     => apiFetch(`/items/${id}`,          { method: 'PUT',    body: JSON.stringify(b) }),
-  deleteItem:       (id)        => apiFetch(`/items/${id}`,          { method: 'DELETE' }),
-  saveSettings:     (b)         => apiFetch('/settings',             { method: 'PATCH',  body: JSON.stringify(b) }),
-  backup:           ()          => apiFetch('/backup',               { method: 'POST' }),
-  getBackups:       ()          => apiFetch('/backups'),
-  getMonths:        ()          => apiFetch('/months'),
-  getMonth:         (m)         => apiFetch(`/months/${encodeURIComponent(m)}`),
-  setMonthIncome:   (m, income) => apiFetch(`/months/${encodeURIComponent(m)}/income`, { method: 'POST', body: JSON.stringify({ income }) }),
-  addSurplus:       (m, date)   => apiFetch(`/months/${encodeURIComponent(m)}/surplus`, { method: 'POST', body: JSON.stringify({ date }) }),
-  getLedger:        ()          => apiFetch('/savings-ledger'),
-  deleteLedgerEntry:(id)        => apiFetch(`/savings-ledger/${id}`, { method: 'DELETE' }),
+  getData:    async ()        => _readData(),
+  getSummary: async (month)   => {
+    const data = await _readData();
+    const m    = month || currentMonthYM();
+    const ms   = _computeMonthSummary(data, m);
+    const ats  = _computeAllTimeSavings(data);
+    const dc   = (data.settings?.defaultCurrency || 'DZD').toUpperCase();
+    return { ...ms, allTimeSavings: ats.total, allTimeByCurrency: ats.byCurrency, defaultCurrency: dc };
+  },
+  postData: async (d) => {
+    const dc = d.settings?.defaultCurrency || 'DZD';
+    await Promise.all([
+      _sb.from('savings_ledger').delete().neq('id', ''),
+      _sb.from('items').delete().neq('id', ''),
+      _sb.from('months').delete().neq('ym', ''),
+    ]);
+    await _sb.from('settings').upsert({ id: 'default', default_currency: dc });
+    const mIns = Object.entries(d.months || {}).map(([ym, v]) => ({ ym, income: Number(v.income) || 0 }));
+    if (mIns.length) await _sb.from('months').insert(mIns);
+    const iIns = (d.items || []).map(i => ({
+      id: i.id, label: i.label, amount: Number(i.amount) || 0,
+      type: i.type || 'expense', date: i.date || null, month: i.month,
+      category: i.category || '', notes: i.notes || '',
+      currency: i.currency || dc, created_at: i.createdAt || new Date().toISOString(),
+      is_recurring: i.is_recurring || false,
+      recur_every: i.recur_every || null, recur_unit: i.recur_unit || null,
+      recur_end_type: i.recur_end_type || null,
+      recur_duration_count: i.recur_duration_count || null,
+      recur_duration_unit:  i.recur_duration_unit  || null,
+      recur_end_date:       i.recur_end_date        || null,
+    }));
+    if (iIns.length) await _sb.from('items').insert(iIns);
+    const lIns = (d.savingsLedger || []).map(e => ({
+      id: e.id, item_id: e.itemId || null, amount: Number(e.amount) || 0,
+      currency: e.currency || dc, date: e.date || null, month: e.month || null,
+      source: e.source, label: e.label || '',
+    }));
+    if (lIns.length) await _sb.from('savings_ledger').insert(lIns);
+    return _readData();
+  },
+  addItem: async (item) => {
+    const { data: sRow } = await _sb.from('settings').select('default_currency').eq('id', 'default').maybeSingle();
+    const dc    = sRow?.default_currency || 'DZD';
+    const month = item.month || (item.date || '').slice(0, 7) || currentMonthYM();
+    const isRec = item.is_recurring === true || item.is_recurring === 'true';
+    const eType = isRec ? (item.recur_end_type || 'ongoing') : null;
+    const row   = {
+      id: _newId(), label: String(item.label).trim(), amount: Number(item.amount),
+      type: item.type === 'income' ? 'income' : 'expense',
+      date: item.date || new Date().toISOString().slice(0, 10), month,
+      category: item.category ? String(item.category).trim() : '',
+      notes:    item.notes    ? String(item.notes).trim()    : '',
+      currency: item.currency ? String(item.currency).trim().toUpperCase() : dc,
+      created_at: new Date().toISOString(), is_recurring: isRec,
+      recur_every: isRec ? (parseInt(item.recur_every) || 1)       : null,
+      recur_unit:  isRec ? (item.recur_unit  || 'month')            : null,
+      recur_end_type: eType,
+      recur_duration_count: (isRec && eType === 'duration') ? (parseInt(item.recur_duration_count) || null) : null,
+      recur_duration_unit:  (isRec && eType === 'duration') ? (item.recur_duration_unit  || null)           : null,
+      recur_end_date:       (isRec && eType === 'date')     ? (item.recur_end_date        || null)           : null,
+    };
+    const { error } = await _sb.from('items').insert(row);
+    if (error) throw new Error(error.message);
+    await _sb.from('months').upsert({ ym: month, income: 0 }, { onConflict: 'ym', ignoreDuplicates: true });
+    if (!isRec && row.category.toLowerCase().trim() === 'monthly savings' && row.type === 'expense') {
+      await _sb.from('savings_ledger').insert({
+        id: _newId(), item_id: row.id, amount: row.amount, currency: row.currency,
+        date: row.date, month: row.month, source: 'savings', label: row.label,
+      });
+    }
+    return _dbRowToItem(row);
+  },
+  updateItem: async (id, item) => {
+    const { data: old, error: fe } = await _sb.from('items').select('*').eq('id', id).maybeSingle();
+    if (fe || !old) throw new Error('Item not found');
+    const { data: sRow } = await _sb.from('settings').select('default_currency').eq('id', 'default').maybeSingle();
+    const dc    = sRow?.default_currency || 'DZD';
+    const month = item.month || (item.date || old.date || '').slice(0, 7) || old.month || currentMonthYM();
+    const isRec = item.is_recurring === true || item.is_recurring === 'true'
+               || (item.is_recurring === undefined && Boolean(old.is_recurring));
+    const eType = item.recur_end_type || (isRec ? (old.recur_end_type || 'ongoing') : null);
+    const upd   = {
+      label:    String((item.label    ?? old.label)    || '').trim(),
+      amount:   Number (item.amount   ?? old.amount),
+      type:    ((item.type    ?? old.type)    === 'income' ? 'income' : 'expense'),
+      date:     item.date    ?? old.date    ?? null,
+      month,
+      category: String((item.category ?? old.category) || '').trim(),
+      notes:    String((item.notes    ?? old.notes)    || '').trim(),
+      currency: String((item.currency ?? old.currency) || dc).toUpperCase(),
+      updated_at: new Date().toISOString(), is_recurring: isRec,
+      recur_every: isRec ? (parseInt(item.recur_every ?? old.recur_every) || 1)                            : null,
+      recur_unit:  isRec ? (item.recur_unit  || old.recur_unit  || 'month')                                : null,
+      recur_end_type: isRec ? eType : null,
+      recur_duration_count: (isRec && eType === 'duration') ? (parseInt(item.recur_duration_count ?? old.recur_duration_count) || null) : null,
+      recur_duration_unit:  (isRec && eType === 'duration') ? (item.recur_duration_unit  || old.recur_duration_unit  || null)           : null,
+      recur_end_date:       (isRec && eType === 'date')     ? (item.recur_end_date        || old.recur_end_date        || null)           : null,
+    };
+    const { error } = await _sb.from('items').update(upd).eq('id', id);
+    if (error) throw new Error(error.message);
+    await _sb.from('savings_ledger').delete().eq('item_id', id);
+    if (!isRec && upd.category.toLowerCase().trim() === 'monthly savings' && upd.type === 'expense') {
+      await _sb.from('savings_ledger').insert({
+        id: _newId(), item_id: id, amount: upd.amount, currency: upd.currency,
+        date: upd.date, month: upd.month, source: 'savings', label: upd.label,
+      });
+    }
+    return { id, ..._dbRowToItem(old), ...upd };
+  },
+  deleteItem: async (id) => {
+    await _sb.from('savings_ledger').delete().eq('item_id', id);
+    const { error } = await _sb.from('items').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  },
+  saveSettings: async (b) => {
+    if (b.defaultCurrency !== undefined) {
+      const cur = String(b.defaultCurrency).trim().toUpperCase();
+      const { error } = await _sb.from('settings').upsert({ id: 'default', default_currency: cur }, { onConflict: 'id' });
+      if (error) throw new Error(error.message);
+    }
+    const { data: row } = await _sb.from('settings').select('*').eq('id', 'default').maybeSingle();
+    return { defaultCurrency: row?.default_currency || 'DZD' };
+  },
+  backup: async () => {
+    const data = await _readData();
+    const ts   = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const name = `life-advisor-${ts}.json`;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href: url, download: name });
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return { file: name };
+  },
+  getBackups: async () => [],
+  getMonths: async () => {
+    const { data: mRows } = await _sb.from('months').select('*');
+    const { data: iRows } = await _sb.from('items').select('month');
+    const set = new Set((mRows || []).map(r => r.ym));
+    for (const r of (iRows || [])) if (r.month) set.add(r.month);
+    return [...set].sort().reverse().map(ym => {
+      const r = (mRows || []).find(r => r.ym === ym);
+      return { ym, label: monthLabelFE(ym), income: parseFloat(r?.income) || 0 };
+    });
+  },
+  getMonth: async (m) => {
+    const data    = await _readData();
+    const summary = _computeMonthSummary(data, m);
+    const items   = (data.items || [])
+      .map(i => { const occ = _recurOccurrencesInMonth(i, m); return occ > 0 ? { ...i, _occurrences: occ } : null; })
+      .filter(Boolean);
+    return { ...summary, items, label: monthLabelFE(m) };
+  },
+  setMonthIncome: async (m, income) => {
+    const { error } = await _sb.from('months').upsert({ ym: m, income }, { onConflict: 'ym' });
+    if (error) throw new Error(error.message);
+    return { month: m, income };
+  },
+  addSurplus: async (m, date) => {
+    const { data: ex } = await _sb.from('savings_ledger').select('id').eq('month', m).eq('source', 'surplus').maybeSingle();
+    if (ex) throw new Error('Surplus already added for this month');
+    const data = await _readData();
+    const ms   = _computeMonthSummary(data, m);
+    if (ms.remaining <= 0) throw new Error('No positive remaining balance to add');
+    const dc = (data.settings?.defaultCurrency || 'DZD').toUpperCase();
+    const entry = {
+      id: _newId(), item_id: null, amount: ms.remaining, currency: dc,
+      date: date || new Date().toISOString().slice(0, 10),
+      month: m, source: 'surplus', label: `Salary surplus — ${monthLabelFE(m)}`,
+    };
+    const { error } = await _sb.from('savings_ledger').insert(entry);
+    if (error) throw new Error(error.message);
+    return _dbRowToLedger(entry);
+  },
+  getLedger: async () => {
+    const { data: sRow } = await _sb.from('settings').select('*').eq('id', 'default').maybeSingle();
+    const { data: rows, error } = await _sb.from('savings_ledger').select('*').order('date', { ascending: false });
+    if (error) throw new Error(error.message);
+    const dc = sRow?.default_currency || 'DZD';
+    const entries = (rows || []).map(_dbRowToLedger);
+    const byCurrency = {};
+    for (const e of entries) {
+      const cur = (e.currency || dc).toUpperCase();
+      byCurrency[cur] = (byCurrency[cur] || 0) + e.amount;
+    }
+    return { entries, totals: byCurrency, defaultCurrency: dc };
+  },
+  deleteLedgerEntry: async (id) => {
+    const { data: e, error: fe } = await _sb.from('savings_ledger').select('*').eq('id', id).maybeSingle();
+    if (fe || !e) throw new Error('Entry not found');
+    if (e.source !== 'surplus') throw new Error('Only surplus entries can be deleted here.');
+    const { error } = await _sb.from('savings_ledger').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  },
 };
 
 /* -- Currency formatter ------------------------------------- */
@@ -86,6 +338,36 @@ function addDurationFE(date, count, unit) {
   else if (unit === 'month') d.setMonth(d.getMonth() + count);
   else if (unit === 'year')  d.setFullYear(d.getFullYear() + count);
   return d;
+}
+
+function _recurOccurrencesInMonth(item, ym) {
+  if (!item.is_recurring) return item.month === ym ? 1 : 0;
+  if (!item.date) return item.month === ym ? 1 : 0;
+  const [yr, mo] = ym.split('-').map(Number);
+  const monthStart = new Date(yr, mo - 1, 1);
+  const monthEnd   = new Date(yr, mo, 0, 23, 59, 59, 999);
+  const startDate  = new Date(item.date);
+  if (startDate > monthEnd) return 0;
+  let recurEnd = null;
+  if (item.recur_end_type === 'date' && item.recur_end_date) {
+    const d = new Date(item.recur_end_date); d.setHours(23, 59, 59, 999); recurEnd = d;
+  } else if (item.recur_end_type === 'duration' && item.recur_duration_count && item.recur_duration_unit) {
+    recurEnd = new Date(addDurationFE(new Date(startDate), item.recur_duration_count, item.recur_duration_unit).getTime() - 1);
+  }
+  if (recurEnd && recurEnd < monthStart) return 0;
+  const every = item.recur_every || 1;
+  const unit  = item.recur_unit  || 'month';
+  let current = new Date(startDate);
+  if (current < monthStart) {
+    if      (unit === 'day')  { const s = Math.floor((monthStart - current) / (every * 86400000));     if (s > 0) current = addDurationFE(current, s * every, 'day'); }
+    else if (unit === 'week') { const s = Math.floor((monthStart - current) / (every * 7 * 86400000)); if (s > 0) current = addDurationFE(current, s * every, 'week'); }
+  }
+  let count = 0;
+  for (let i = 0; i < 500 && current <= monthEnd; i++) {
+    if (current >= monthStart && (!recurEnd || current <= recurEnd)) count++;
+    current = addDurationFE(current, every, unit);
+  }
+  return count;
 }
 
 function describeRecurrence(item) {
@@ -185,7 +467,7 @@ async function loadData() {
       state.allMonths.unshift({ ym: cm, label: monthLabelFE(cm), income: 0 });
     }
   } catch (e) {
-    toast('Could not connect to backend. Is server.js running?', 'error', 5000);
+    toast('Could not load data. Check your connection or Supabase config.', 'error', 5000);
     console.error(e);
   }
 }
@@ -634,7 +916,16 @@ async function confirmDeleteItem(id) {
    EXPORT / IMPORT / BACKUP
 ---------------------------------------------------------- */
 
-function exportData() { window.location.href = '/api/export'; }
+async function exportData() {
+  try {
+    const data = await _readData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href: url, download: 'life-advisor-export.json' });
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) { toast('Export failed: ' + err.message, 'error'); }
+}
 
 function importData() {
   const input = document.createElement('input');
