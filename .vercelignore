@@ -1,0 +1,5 @@
+server.js
+node_modules/
+.env
+backups/
+data.json
