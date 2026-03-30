@@ -66,6 +66,11 @@
         </li>
         <li class="nav-section-label">MORE</li>
         <li>
+          <button class="nav-link" data-page="notes">
+            <span class="nav-icon">📝</span> Notes &amp; Reminders
+          </button>
+        </li>
+        <li>
           <button class="nav-link" data-page="tools">
             <span class="nav-icon">🔧</span> Tools
           </button>
@@ -465,6 +470,36 @@
     </div>
 
     <!-- ════════════════════════════════════════════════
+         PAGE: NOTES
+    ════════════════════════════════════════════════════ -->
+    <div id="page-notes" class="page-view">
+      <h2 class="page-heading">📝 Notes &amp; Reminders</h2>
+      <p class="page-subheading">Personal notes with optional browser notifications. Reminders fire while this tab is open.</p>
+
+      <div class="flex-row mb-16">
+        <div id="notes-reminder-status" style="font-size:.82rem;color:var(--text-muted)"></div>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" onclick="openNoteModal()">+ Add Note</button>
+      </div>
+
+      <!-- Pinned -->
+      <div id="notes-pinned-section" style="display:none">
+        <h3 class="section-title">📌 Pinned</h3>
+        <div id="notes-pinned-grid" class="notes-grid"></div>
+      </div>
+
+      <!-- All notes -->
+      <div id="notes-unpinned-section">
+        <div id="notes-unpinned-grid" class="notes-grid"></div>
+      </div>
+
+      <div id="notes-empty" style="display:none;padding:48px 0;text-align:center;color:var(--text-muted)">
+        <div style="font-size:3rem;margin-bottom:12px">📋</div>
+        <p>No notes yet — click <strong>+ Add Note</strong> to create one.</p>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════
          PAGE: SETTINGS
     ════════════════════════════════════════════════════ -->
     <div id="page-settings" class="page-view">
@@ -649,6 +684,76 @@ Signature &amp; tampon</div>
 ═══════════════════════════════════════════════════════════════ -->
 
 <!-- Add/Edit Item Modal -->
+<!-- Notes Modal -->
+<div id="note-modal" class="modal-overlay">
+  <div class="modal">
+    <h2 id="note-modal-title">New Note</h2>
+    <div class="form-group">
+      <label>Title <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="note-title" placeholder="Note title…" />
+    </div>
+    <div class="form-group">
+      <label>Content</label>
+      <textarea id="note-content" rows="4" placeholder="Write your note…"></textarea>
+    </div>
+    <!-- Color -->
+    <div class="form-group">
+      <label>Color</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <label style="cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="note-color" value="none" checked /> Default</label>
+        <label style="cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="note-color" value="red" /> 🟥 Red</label>
+        <label style="cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="note-color" value="yellow" /> 🟨 Yellow</label>
+        <label style="cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="note-color" value="green" /> 🟩 Green</label>
+        <label style="cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="note-color" value="blue" /> 🟦 Blue</label>
+        <label style="cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="note-color" value="purple" /> 🟪 Purple</label>
+      </div>
+    </div>
+    <!-- Pin -->
+    <div class="form-group" style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="note-pinned" style="width:16px;height:16px" />
+      <label for="note-pinned" style="margin:0;cursor:pointer">📌 Pin this note</label>
+    </div>
+    <!-- Reminder -->
+    <div style="border-top:1px solid var(--border);margin:14px 0 16px;padding-top:16px">
+      <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:.06em;margin-bottom:12px">🔔 Reminder</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button type="button" id="rtype-none"   class="type-toggle type-toggle-expense type-toggle-active" onclick="setReminderType('none')">None</button>
+        <button type="button" id="rtype-once"   class="type-toggle type-toggle-income" onclick="setReminderType('once')">One-time</button>
+        <button type="button" id="rtype-repeat" class="type-toggle type-toggle-income" onclick="setReminderType('repeat')">Repeating</button>
+      </div>
+      <div id="reminder-once-section" style="display:none">
+        <div class="form-group">
+          <label>Date &amp; time</label>
+          <input type="datetime-local" id="note-alert-at" />
+        </div>
+        <p style="font-size:.8rem;color:var(--text-muted)">A browser notification will fire once at this date &amp; time (tab must be open).</p>
+      </div>
+      <div id="reminder-repeat-section" style="display:none">
+        <div class="form-row">
+          <div class="form-group" style="max-width:100px">
+            <label>Every</label>
+            <input type="number" id="note-interval-value" min="1" max="9999" value="30" />
+          </div>
+          <div class="form-group">
+            <label>Unit</label>
+            <select id="note-interval-unit">
+              <option value="minutes">Minutes</option>
+              <option value="hours">Hours</option>
+              <option value="days">Days</option>
+            </select>
+          </div>
+        </div>
+        <p style="font-size:.8rem;color:var(--text-muted)">Notification repeats every N minutes/hours/days while this tab is open.</p>
+      </div>
+    </div>
+    <input type="hidden" id="note-editing-id" value="" />
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeNoteModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitNoteForm()">Save Note</button>
+    </div>
+  </div>
+</div>
+
 <div id="item-modal" class="modal-overlay">
   <div class="modal">
     <h2 id="item-modal-title">Add Item</h2>

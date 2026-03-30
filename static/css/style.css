@@ -628,6 +628,42 @@ h3.section-title {
 .toast.error   { border-left: 4px solid var(--danger); }
 .toast.info    { border-left: 4px solid var(--accent); }
 
+/* ── Notes grid ───────────────────────────────────────────── */
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.note-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: box-shadow .15s, transform .1s;
+}
+.note-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.note-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.note-card-title  { font-size: .95rem; font-weight: 700; color: var(--text); flex: 1; word-break: break-word; }
+.note-card-del    { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .9rem; padding: 2px 4px; border-radius: 4px; flex-shrink: 0; }
+.note-card-del:hover { background: var(--danger); color: #fff; }
+.note-card-content{ font-size: .85rem; color: var(--text-muted); line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
+.note-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+.note-reminder    { font-size: .75rem; font-weight: 600; color: var(--accent); }
+.note-date        { font-size: .75rem; color: var(--text-muted); }
+.note-color-none   { border-left-color: var(--border); }
+.note-color-red    { border-left-color: #ff6b6b; }
+.note-color-yellow { border-left-color: #ffd166; }
+.note-color-green  { border-left-color: #4ade80; }
+.note-color-blue   { border-left-color: #4da3ff; }
+.note-color-purple { border-left-color: #c084fc; }
+
 /* ── Modal ────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed; inset: 0;

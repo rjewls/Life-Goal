@@ -89,19 +89,24 @@ CREATE TABLE public.savings_ledger (
 
 
 -- ============================================================
---  NOTES  (personal timed notes with sound alerts)
---  Ready for the future notes feature
+--  NOTES  (personal notes with one-time or repeating reminders)
 -- ============================================================
 CREATE TABLE public.notes (
-  id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
-  title       TEXT        NOT NULL,
-  content     TEXT        NOT NULL DEFAULT '',
-  alert_at    TIMESTAMPTZ,              -- NULL = no scheduled alert
-  alert_sound TEXT        NOT NULL DEFAULT 'default',
-  is_alerted  BOOLEAN     NOT NULL DEFAULT FALSE,
-  is_pinned   BOOLEAN     NOT NULL DEFAULT FALSE,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id                       UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title                    TEXT        NOT NULL,
+  content                  TEXT        NOT NULL DEFAULT '',
+  -- One-time reminder: fire a notification at this exact moment
+  alert_at                 TIMESTAMPTZ,
+  -- Repeating reminder: every N [minutes|hours|days]
+  reminder_interval_value  INTEGER,
+  reminder_interval_unit   TEXT        CHECK (reminder_interval_unit IN ('minutes','hours','days')),
+  -- Native notification identifier so we can cancel/replace it
+  notification_id          TEXT,
+  -- UX helpers
+  color                    TEXT        NOT NULL DEFAULT 'none',
+  is_pinned                BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 

@@ -417,16 +417,17 @@ function navigate(pageId, historyPush = true) {
   if (navItem) navItem.closest('li').classList.add('active');
 
   const titles = {
-    dashboard:      '?? Dashboard',
-    guides:         '?? Life Guides ? Overview',
-    algeria:        '???? Algeria Papers & Work Abroad',
-    military:       '?? Military Exemption Guide',
-    ecommerce:      '?? E-Commerce Mastery 2026',
-    'ai-creatives': '?? Free AI Tools for Creatives',
-    coding:         '?? AI/ML Coding Roadmap',
-    savings:        '?? Savings & Monthly Costs',
-    tools:          '?? Tools',
-    settings:       '?? Settings'
+    dashboard:      '🏠 Dashboard',
+    guides:         '📚 Life Guides — Overview',
+    algeria:        '🇩🇿 Algeria Papers & Work Abroad',
+    military:       '🪖 Military Exemption Guide',
+    ecommerce:      '🛒 E-Commerce Mastery 2026',
+    'ai-creatives': '🎨 Free AI Tools for Creatives',
+    coding:         '💻 AI/ML Coding Roadmap',
+    savings:        '💰 Savings & Monthly Costs',
+    tools:          '🔧 Tools',
+    notes:          '📝 Notes & Reminders',
+    settings:       '⚙️ Settings'
   };
   document.getElementById('page-title').textContent = titles[pageId] || pageId;
 
@@ -436,6 +437,7 @@ function navigate(pageId, historyPush = true) {
   if (pageId === 'dashboard') renderDashboard();
   if (pageId === 'savings')   renderSavingsPage();
   if (pageId === 'settings')  renderSettingsPage();
+  if (pageId === 'notes')     renderNotesPage();
 }
 
 function openSidebar() {
@@ -1021,8 +1023,281 @@ function copyText(btn) {
 }
 
 /* ----------------------------------------------------------
-   UTILITIES
+   NOTES  (with browser notifications)
 ---------------------------------------------------------- */
+/* State for reminder intervals keyed by note id */
+const _noteTimers = {};
+
+/* -- Note API helpers -------------------------------------- */
+function _dbRowToNote(r) {
+  return {
+    id:                    r.id,
+    title:                 r.title,
+    content:               r.content || '',
+    alertAt:               r.alert_at || null,
+    reminderIntervalValue: r.reminder_interval_value || null,
+    reminderIntervalUnit:  r.reminder_interval_unit  || null,
+    notificationId:        r.notification_id         || null,
+    isPinned:              r.is_pinned               || false,
+    color:                 r.color                   || 'none',
+    createdAt:             r.created_at,
+    updatedAt:             r.updated_at,
+  };
+}
+async function _apiGetNotes() {
+  const { data, error } = await _sb.from('notes').select('*')
+    .order('is_pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data || []).map(_dbRowToNote);
+}
+async function _apiAddNote(note) {
+  const row = {
+    title:                   String(note.title   || '').trim(),
+    content:                 String(note.content || '').trim(),
+    alert_at:                note.alertAt               || null,
+    reminder_interval_value: note.reminderIntervalValue ? parseInt(note.reminderIntervalValue) : null,
+    reminder_interval_unit:  note.reminderIntervalUnit  || null,
+    notification_id:         null,
+    is_pinned:               Boolean(note.isPinned),
+    color:                   note.color || 'none',
+  };
+  const { data, error } = await _sb.from('notes').insert(row).select().single();
+  if (error) throw new Error(error.message);
+  return _dbRowToNote(data);
+}
+async function _apiUpdateNote(id, note) {
+  const upd = { updated_at: new Date().toISOString() };
+  if (note.title                   !== undefined) upd.title                   = String(note.title).trim();
+  if (note.content                 !== undefined) upd.content                 = String(note.content).trim();
+  if (note.alertAt                 !== undefined) upd.alert_at                = note.alertAt || null;
+  if (note.reminderIntervalValue   !== undefined) upd.reminder_interval_value = note.reminderIntervalValue ? parseInt(note.reminderIntervalValue) : null;
+  if (note.reminderIntervalUnit    !== undefined) upd.reminder_interval_unit  = note.reminderIntervalUnit  || null;
+  if (note.isPinned                !== undefined) upd.is_pinned               = Boolean(note.isPinned);
+  if (note.color                   !== undefined) upd.color                   = note.color || 'none';
+  const { data, error } = await _sb.from('notes').update(upd).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  return _dbRowToNote(data);
+}
+async function _apiDeleteNote(id) {
+  const { error } = await _sb.from('notes').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+/* -- Browser notification helpers -------------------------- */
+async function _requestNotifPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  const perm = await Notification.requestPermission();
+  return perm === 'granted';
+}
+function _fireNotification(title, body) {
+  if (Notification.permission !== 'granted') return;
+  new Notification(`📝 ${title}`, { body: body || title, icon: '/favicon.ico' });
+}
+function _clearNoteTimer(id) {
+  if (_noteTimers[id]) { clearTimeout(_noteTimers[id]); clearInterval(_noteTimers[id]); delete _noteTimers[id]; }
+}
+function _scheduleNoteReminders(notes) {
+  // Clear all existing timers first
+  Object.keys(_noteTimers).forEach(_clearNoteTimer);
+  const now = Date.now();
+  for (const note of notes) {
+    if (note.reminderIntervalValue && note.reminderIntervalUnit) {
+      // Repeating
+      const unitMs = { minutes: 60000, hours: 3600000, days: 86400000 };
+      const ms = parseInt(note.reminderIntervalValue) * (unitMs[note.reminderIntervalUnit] || 60000);
+      _noteTimers[note.id] = setInterval(() => _fireNotification(note.title, note.content), ms);
+    } else if (note.alertAt) {
+      // One-time
+      const delay = new Date(note.alertAt).getTime() - now;
+      if (delay > 0) {
+        _noteTimers[note.id] = setTimeout(() => _fireNotification(note.title, note.content), delay);
+      }
+    }
+  }
+}
+
+/* -- Reminder type toggle ---------------------------------- */
+function setReminderType(type) {
+  ['none','once','repeat'].forEach(t => {
+    const btn = document.getElementById('rtype-' + t);
+    if (btn) { btn.classList.toggle('type-toggle-active', t === type); btn.classList.toggle('type-toggle-income', t !== type); }
+  });
+  const onceEl   = document.getElementById('reminder-once-section');
+  const repeatEl = document.getElementById('reminder-repeat-section');
+  if (onceEl)   onceEl.style.display   = type === 'once'   ? '' : 'none';
+  if (repeatEl) repeatEl.style.display = type === 'repeat' ? '' : 'none';
+}
+
+/* -- Open / close modal ------------------------------------ */
+function openNoteModal(note) {
+  const isEdit = Boolean(note);
+  document.getElementById('note-modal-title').textContent = isEdit ? 'Edit Note' : 'New Note';
+  document.getElementById('note-title').value             = note?.title   || '';
+  document.getElementById('note-content').value          = note?.content || '';
+  document.getElementById('note-pinned').checked          = note?.isPinned || false;
+  document.getElementById('note-editing-id').value       = note?.id || '';
+
+  // Color
+  const colorVal = note?.color || 'none';
+  document.querySelectorAll('input[name="note-color"]').forEach(r => { r.checked = r.value === colorVal; });
+
+  // Reminder
+  if (note?.reminderIntervalValue) {
+    setReminderType('repeat');
+    document.getElementById('note-interval-value').value = String(note.reminderIntervalValue);
+    document.getElementById('note-interval-unit').value  = note.reminderIntervalUnit || 'minutes';
+  } else if (note?.alertAt) {
+    setReminderType('once');
+    // Convert UTC ISO to datetime-local value
+    const d = new Date(note.alertAt);
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('note-alert-at').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } else {
+    setReminderType('none');
+    // default one-time: 1 hour from now
+    const def = new Date(Date.now() + 3600000);
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('note-alert-at').value = `${def.getFullYear()}-${pad(def.getMonth()+1)}-${pad(def.getDate())}T${pad(def.getHours())}:${pad(def.getMinutes())}`;
+    document.getElementById('note-interval-value').value = '30';
+    document.getElementById('note-interval-unit').value  = 'minutes';
+  }
+
+  openModal('note-modal');
+}
+function closeNoteModal() { closeModal('note-modal'); }
+
+/* -- Submit note form -------------------------------------- */
+async function submitNoteForm() {
+  const title = document.getElementById('note-title').value.trim();
+  if (!title) { toast('Title is required', 'error'); return; }
+
+  const reminderActive = (() => {
+    const btn = document.querySelector('#rtype-once.type-toggle-active');
+    const btn2 = document.querySelector('#rtype-repeat.type-toggle-active');
+    if (btn)  return 'once';
+    if (btn2) return 'repeat';
+    return 'none';
+  })();
+  // Determine type explicitly by checking which active class is on which button
+  const rOnceActive   = document.getElementById('rtype-once')?.classList.contains('type-toggle-active');
+  const rRepeatActive = document.getElementById('rtype-repeat')?.classList.contains('type-toggle-active');
+  const rType = rRepeatActive ? 'repeat' : rOnceActive ? 'once' : 'none';
+
+  let alertAt = null, intervalValue = null, intervalUnit = null;
+  if (rType === 'once') {
+    const v = document.getElementById('note-alert-at').value;
+    if (!v) { toast('Please set a date and time', 'error'); return; }
+    alertAt = new Date(v).toISOString();
+    if (new Date(v) <= new Date()) { toast('Reminder time must be in the future', 'error'); return; }
+  } else if (rType === 'repeat') {
+    intervalValue = parseInt(document.getElementById('note-interval-value').value) || 0;
+    intervalUnit  = document.getElementById('note-interval-unit').value;
+    if (intervalValue < 1) { toast('Interval must be at least 1', 'error'); return; }
+  }
+
+  const color   = document.querySelector('input[name="note-color"]:checked')?.value || 'none';
+  const isPinned = document.getElementById('note-pinned').checked;
+  const content  = document.getElementById('note-content').value.trim();
+  const editId   = document.getElementById('note-editing-id').value;
+
+  const payload = { title, content, isPinned, color, alertAt, reminderIntervalValue: intervalValue, reminderIntervalUnit: intervalUnit };
+
+  try {
+    // Request permission if needed
+    if (rType !== 'none') await _requestNotifPermission();
+    if (editId) await _apiUpdateNote(editId, payload);
+    else        await _apiAddNote(payload);
+    closeNoteModal();
+    toast(editId ? 'Note updated' : 'Note added', 'success');
+    await renderNotesPage();
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+/* -- Delete note ------------------------------------------- */
+async function deleteNote(id, title) {
+  if (!confirm(`Delete "${title}"?`)) return;
+  try {
+    _clearNoteTimer(id);
+    await _apiDeleteNote(id);
+    toast('Note deleted', 'success');
+    await renderNotesPage();
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+/* -- Render notes page ------------------------------------- */
+async function renderNotesPage() {
+  let notes;
+  try {
+    notes = await _apiGetNotes();
+  } catch (e) {
+    toast('Could not load notes: ' + e.message, 'error');
+    return;
+  }
+
+  // Schedule/reschedule browser reminders
+  _scheduleNoteReminders(notes);
+
+  // Notify reminder status
+  const statusEl = document.getElementById('notes-reminder-status');
+  if (statusEl) {
+    if (!('Notification' in window)) {
+      statusEl.textContent = '⚠️ Browser does not support notifications.';
+    } else if (Notification.permission === 'denied') {
+      statusEl.textContent = '🕊️ Notifications blocked. Enable them in browser settings.';
+      statusEl.style.color = 'var(--danger)';
+    } else if (Notification.permission === 'default') {
+      statusEl.innerHTML = '<button class="btn btn-outline btn-sm" onclick="_requestNotifPermission().then(renderNotesPage)">🔔 Enable notifications</button>';
+    } else {
+      statusEl.textContent = '✅ Notifications enabled';
+      statusEl.style.color = 'var(--success)';
+    }
+  }
+
+  function noteCardHtml(note) {
+    const reminderTxt = note.reminderIntervalValue
+      ? `🔔 Every ${note.reminderIntervalValue} ${note.reminderIntervalUnit}`
+      : note.alertAt
+      ? `🔔 ${new Date(note.alertAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}`
+      : '';
+    const date = new Date(note.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const snippet = (note.content || '').slice(0, 160) + (note.content?.length > 160 ? '…' : '');
+    return `
+      <div class="note-card note-color-${escHtml(note.color || 'none')}" onclick="openNoteModal(${JSON.stringify(note).replace(/</g,'\\u003c')})">
+        <div class="note-card-header">
+          <span class="note-card-title">${note.isPinned ? '📌 ' : ''}${escHtml(note.title)}</span>
+          <button class="note-card-del" onclick="event.stopPropagation();deleteNote('${escHtml(note.id)}','${escHtml(note.title)}')">&#x2715;</button>
+        </div>
+        ${snippet ? `<div class="note-card-content">${escHtml(snippet)}</div>` : ''}
+        <div class="note-card-footer">
+          <span class="note-reminder">${escHtml(reminderTxt)}</span>
+          <span class="note-date">${date}</span>
+        </div>
+      </div>`;
+  }
+
+  const pinned   = notes.filter(n => n.isPinned);
+  const unpinned = notes.filter(n => !n.isPinned);
+
+  const pinnedSec = document.getElementById('notes-pinned-section');
+  if (pinnedSec) {
+    pinnedSec.style.display = pinned.length ? '' : 'none';
+    document.getElementById('notes-pinned-grid').innerHTML = pinned.map(noteCardHtml).join('');
+  }
+  document.getElementById('notes-unpinned-grid').innerHTML = unpinned.map(noteCardHtml).join('');
+
+  const emptyEl = document.getElementById('notes-empty');
+  if (emptyEl) emptyEl.style.display = notes.length === 0 ? '' : 'none';
+}
+
+/* ----------------------------------------------------------
+   UTILITIES
+----------------------------------------------------------*/
 function escHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1082,4 +1357,10 @@ window.closeTutorial               = closeTutorial;
 window.toggleCollapsible           = toggleCollapsible;
 window.copyText                    = copyText;
 window.applyFilter                 = applyFilter;
+window.openNoteModal               = openNoteModal;
+window.closeNoteModal              = closeNoteModal;
+window.submitNoteForm              = submitNoteForm;
+window.deleteNote                  = deleteNote;
+window.setReminderType             = setReminderType;
+window._requestNotifPermission     = _requestNotifPermission;
 
