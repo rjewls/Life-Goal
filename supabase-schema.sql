@@ -15,7 +15,8 @@ DROP TABLE IF EXISTS public.savings_ledger CASCADE;
 DROP TABLE IF EXISTS public.items          CASCADE;
 DROP TABLE IF EXISTS public.months         CASCADE;
 DROP TABLE IF EXISTS public.settings       CASCADE;
-DROP TABLE IF EXISTS public.notes          CASCADE;
+DROP TABLE IF EXISTS public.notes          CASCADE;  -- notes first (FK to note_groups)
+DROP TABLE IF EXISTS public.note_groups    CASCADE;
 DROP TABLE IF EXISTS public.todos          CASCADE;
 
 
@@ -89,6 +90,31 @@ CREATE TABLE public.savings_ledger (
 
 
 -- ============================================================
+--  NOTE_GROUPS  (named groups of notes with their own pin/priority/reminder)
+--  Must be created BEFORE notes because notes.group_id references this table.
+-- ============================================================
+CREATE TABLE public.note_groups (
+  id                       UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title                    TEXT        NOT NULL DEFAULT '',
+  color                    TEXT        NOT NULL DEFAULT 'none',
+  is_pinned                BOOLEAN     NOT NULL DEFAULT FALSE,
+  priority                 TEXT        NOT NULL DEFAULT 'none'
+                                       CHECK (priority IN ('none','low','medium','high')),
+  -- One-time reminder
+  alert_at                 TIMESTAMPTZ,
+  -- Repeating reminder
+  reminder_interval_value  INTEGER,
+  reminder_interval_unit   TEXT        CHECK (reminder_interval_unit IN ('minutes','hours','days')),
+  -- Native notification identifier
+  notification_id          TEXT,
+  -- Display order (lower = appears higher in list)
+  sort_order               INTEGER     NOT NULL DEFAULT 0,
+  created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
+-- ============================================================
 --  NOTES  (personal notes with one-time or repeating reminders)
 -- ============================================================
 CREATE TABLE public.notes (
@@ -105,6 +131,13 @@ CREATE TABLE public.notes (
   -- UX helpers
   color                    TEXT        NOT NULL DEFAULT 'none',
   is_pinned                BOOLEAN     NOT NULL DEFAULT FALSE,
+  is_completed             BOOLEAN     NOT NULL DEFAULT FALSE,
+  priority                 TEXT        NOT NULL DEFAULT 'none'
+                                       CHECK (priority IN ('none','low','medium','high')),
+  -- Display order (lower = appears higher in list)
+  sort_order               INTEGER     NOT NULL DEFAULT 0,
+  -- Group membership: NULL means ungrouped; SET NULL on group delete
+  group_id                 UUID        REFERENCES public.note_groups(id) ON DELETE SET NULL,
   created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -154,6 +187,10 @@ CREATE TRIGGER trg_notes_updated_at
   BEFORE UPDATE ON public.notes
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+CREATE TRIGGER trg_note_groups_updated_at
+  BEFORE UPDATE ON public.note_groups
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 CREATE TRIGGER trg_todos_updated_at
   BEFORE UPDATE ON public.todos
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -165,8 +202,11 @@ CREATE TRIGGER trg_todos_updated_at
 CREATE INDEX idx_items_month       ON public.items(month);
 CREATE INDEX idx_items_date        ON public.items(date);
 CREATE INDEX idx_savings_month     ON public.savings_ledger(month);
-CREATE INDEX idx_notes_alert_at    ON public.notes(alert_at);
-CREATE INDEX idx_todos_due         ON public.todos(due_date);
+CREATE INDEX idx_notes_alert_at       ON public.notes(alert_at);
+CREATE INDEX idx_notes_group_id       ON public.notes(group_id);
+CREATE INDEX idx_notes_sort_order     ON public.notes(sort_order);
+CREATE INDEX idx_note_groups_sort     ON public.note_groups(sort_order);
+CREATE INDEX idx_todos_due            ON public.todos(due_date);
 
 
 -- ============================================================
@@ -178,6 +218,7 @@ ALTER TABLE public.months         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.items          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.savings_ledger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notes          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.note_groups    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.todos          ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "anon full access" ON public.settings       FOR ALL USING (true) WITH CHECK (true);
@@ -185,6 +226,7 @@ CREATE POLICY "anon full access" ON public.months         FOR ALL USING (true) W
 CREATE POLICY "anon full access" ON public.items          FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "anon full access" ON public.savings_ledger FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "anon full access" ON public.notes          FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "anon full access" ON public.note_groups    FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "anon full access" ON public.todos          FOR ALL USING (true) WITH CHECK (true);
 
 
@@ -192,4 +234,71 @@ CREATE POLICY "anon full access" ON public.todos          FOR ALL USING (true) W
 --  Done! Verify with:
 --  SELECT table_name FROM information_schema.tables
 --  WHERE table_schema = 'public' ORDER BY table_name;
+-- ============================================================
+
+
+-- ============================================================
+--  ALTER STATEMENTS FOR EXISTING DATABASES
+--  (Run these if you already have data and cannot DROP+recreate)
+--  Safe to run multiple times thanks to IF NOT EXISTS.
+-- ============================================================
+
+-- Step 1: Create the note_groups table (new — did not exist before)
+CREATE TABLE IF NOT EXISTS public.note_groups (
+  id                       UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title                    TEXT        NOT NULL DEFAULT '',
+  color                    TEXT        NOT NULL DEFAULT 'none',
+  is_pinned                BOOLEAN     NOT NULL DEFAULT FALSE,
+  priority                 TEXT        NOT NULL DEFAULT 'none'
+                                       CHECK (priority IN ('none','low','medium','high')),
+  alert_at                 TIMESTAMPTZ,
+  reminder_interval_value  INTEGER,
+  reminder_interval_unit   TEXT        CHECK (reminder_interval_unit IN ('minutes','hours','days')),
+  notification_id          TEXT,
+  sort_order               INTEGER     NOT NULL DEFAULT 0,
+  created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Step 2: Add new columns to the existing notes table
+ALTER TABLE public.notes
+  ADD COLUMN IF NOT EXISTS is_completed             BOOLEAN  NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS priority                 TEXT     NOT NULL DEFAULT 'none'
+                                                             CHECK (priority IN ('none','low','medium','high')),
+  ADD COLUMN IF NOT EXISTS sort_order               INTEGER  NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS group_id                 UUID     REFERENCES public.note_groups(id) ON DELETE SET NULL;
+
+-- Step 3: Add triggers, indexes, and RLS for the new table
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_note_groups_updated_at') THEN
+    CREATE TRIGGER trg_note_groups_updated_at
+      BEFORE UPDATE ON public.note_groups
+      FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_notes_group_id    ON public.notes(group_id);
+CREATE INDEX IF NOT EXISTS idx_notes_sort_order  ON public.notes(sort_order);
+CREATE INDEX IF NOT EXISTS idx_note_groups_sort  ON public.note_groups(sort_order);
+
+ALTER TABLE public.note_groups ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'note_groups' AND policyname = 'anon full access'
+  ) THEN
+    CREATE POLICY "anon full access" ON public.note_groups FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+END $$;
+-- ============================================================
+--  End of ALTER section
 -- ============================================================
